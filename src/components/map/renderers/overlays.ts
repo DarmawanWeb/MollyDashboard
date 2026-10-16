@@ -1,5 +1,5 @@
 import type { OccupancyGrid } from "@/types/ros";
-import { PALETTE } from "../palette";
+import { canvasFont, PALETTE } from "../palette";
 import { pixelsPerMeter, type Viewport } from "../projection";
 
 /**
@@ -46,7 +46,7 @@ export function drawScaleBar(
   ctx.stroke();
 
   ctx.fillStyle = PALETTE.text;
-  ctx.font = "11px 'JetBrains Mono', monospace";
+  ctx.font = canvasFont(11);
   ctx.fillText(`${meters} m`, x + lenPx + 8, y + 4);
 }
 
@@ -74,7 +74,7 @@ export function drawCompass(ctx: CanvasRenderingContext2D, cW: number): void {
   ctx.fill();
 
   ctx.fillStyle = PALETTE.text;
-  ctx.font = "9px 'JetBrains Mono', monospace";
+  ctx.font = canvasFont(9);
   ctx.textAlign = "center";
   ctx.fillText("N", cx, cy + 11);
   ctx.textAlign = "left";
@@ -88,7 +88,7 @@ export function drawZoomBadge(
   const x = 16;
   const y = 16;
 
-  ctx.font = "11px 'JetBrains Mono', monospace";
+  ctx.font = canvasFont(11);
   const m = ctx.measureText(text);
   const w = m.width + 14;
   const h = 22;

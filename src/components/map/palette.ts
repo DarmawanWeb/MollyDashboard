@@ -43,3 +43,8 @@ export const PALETTE = {
 } as const;
 
 export type CanvasPalette = typeof PALETTE;
+
+/** Canvas font shorthand in the dashboard's monospace family. */
+export function canvasFont(px: number, weight = 400): string {
+  return `${weight} ${px}px 'JetBrains Mono Variable', 'JetBrains Mono', monospace`;
+}

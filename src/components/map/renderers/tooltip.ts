@@ -1,4 +1,4 @@
-import { PALETTE } from "../palette";
+import { canvasFont, PALETTE } from "../palette";
 
 interface TooltipLine {
   label: string;
@@ -20,7 +20,7 @@ export function drawTooltip(
 ): void {
   if (lines.length === 0) return;
 
-  ctx.font = "11px 'JetBrains Mono', monospace";
+  ctx.font = canvasFont(11);
   const lineH = 15;
   const padX = 8;
   const padY = 6;

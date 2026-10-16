@@ -1,6 +1,6 @@
 import type { OccupancyGrid } from "@/types/ros";
 import type { POI } from "@/types/ui";
-import { PALETTE } from "../palette";
+import { canvasFont, PALETTE } from "../palette";
 import { projectPoiCell, type Viewport } from "../projection";
 
 interface DrawPoisOptions {
@@ -80,7 +80,7 @@ function drawPoiLabel(
   cx: number,
   topY: number,
 ): void {
-  ctx.font = "11px 'JetBrains Mono', monospace";
+  ctx.font = canvasFont(11);
   const padX = 6;
   const padY = 3;
   const metrics = ctx.measureText(text);

@@ -1,4 +1,4 @@
-import { PALETTE } from "../palette";
+import { canvasFont, PALETTE } from "../palette";
 
 /**
  * Renders the "waiting for map" placeholder when no grid is available.
@@ -14,7 +14,7 @@ export function drawEmptyState(
   for (let y = 0; y < cH; y += 24) ctx.fillRect(0, y, cW, 1);
 
   ctx.fillStyle = PALETTE.textMuted;
-  ctx.font = "11px 'JetBrains Mono', monospace";
+  ctx.font = canvasFont(11);
   ctx.textAlign = "center";
   ctx.fillText("WAITING FOR MAP…", cW / 2, cH / 2);
   ctx.textAlign = "left";

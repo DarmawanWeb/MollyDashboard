@@ -61,7 +61,7 @@
   --radius: 0.125rem;
 
   /* Typography */
-  --font-mono: "JetBrains Mono", monospace;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
   --font-sans: "IBM Plex Sans", sans-serif;
 
   /* Animations */
