@@ -30,14 +30,18 @@ export function bakeGrid(grid: OccupancyGrid): HTMLCanvasElement | null {
   const img = ctx.createImageData(W, H);
   const { data } = grid;
 
-  for (let i = 0; i < data.length; i++) {
-    const v = data[i];
-    const [r, g, b, a] = cellColor(v);
-    const o = i * 4;
-    img.data[o] = r;
-    img.data[o + 1] = g;
-    img.data[o + 2] = b;
-    img.data[o + 3] = a;
+  // ROS rows run bottom-up (row 0 = smallest y), canvas rows top-down: flip.
+  for (let row = 0; row < H; row++) {
+    const src = row * W;
+    const dst = (H - 1 - row) * W;
+    for (let col = 0; col < W; col++) {
+      const [r, g, b, a] = cellColor(data[src + col]);
+      const o = (dst + col) * 4;
+      img.data[o] = r;
+      img.data[o + 1] = g;
+      img.data[o + 2] = b;
+      img.data[o + 3] = a;
+    }
   }
 
   ctx.putImageData(img, 0, 0);
