@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome-check:
+      run: pnpm lint:fix
+
+    type-check:
+      run: pnpm type-check
+    
+    add-files:
+      run: git add .
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm commitlint --edit {1}
+
+pre-push:
+  commands:
+    check:
+      run: pnpm check

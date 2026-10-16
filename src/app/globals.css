@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+/* ============================================================================
+ * Design Tokens — Molly Dashboard
+ * ========================================================================= */
+
+@theme {
+  /* Surfaces */
+  --color-mol-root: #0a0a0a;
+  --color-mol-primary: #111111;
+  --color-mol-secondary: #1a1a1a;
+  --color-mol-tertiary: #262626;
+  --color-mol-elevated: #2e2e2e;
+
+  /* Text */
+  --color-txt-primary: #ffffff;
+  --color-txt-secondary: #a3a3a3;
+  --color-txt-tertiary: #737373;
+  --color-txt-muted: #525252;
+
+  /* Borders */
+  --color-border-subtle: #262626;
+  --color-border: #3a3a3a;
+  --color-border-strong: #4a4a4a;
+
+  /* Accents */
+  --color-cyan: #22d3ee;
+  --color-cyan-light: #67e8f9;
+  --color-violet: #a855f7;
+  --color-violet-light: #c084fc;
+  --color-orange: #f97316;
+  --color-orange-light: #fb923c;
+  --color-amber: #f59e0b;
+  --color-amber-light: #fbbf24;
+  --color-green: #22c55e;
+  --color-green-light: #4ade80;
+  --color-red: #ef4444;
+  --color-red-light: #f87171;
+
+  /* Shadcn semantic mapping (so Base UI components match Molly aesthetic) */
+  --color-background: var(--color-mol-root);
+  --color-foreground: var(--color-txt-primary);
+  --color-card: var(--color-mol-secondary);
+  --color-card-foreground: var(--color-txt-primary);
+  --color-popover: var(--color-mol-secondary);
+  --color-popover-foreground: var(--color-txt-primary);
+  --color-primary: var(--color-cyan);
+  --color-primary-foreground: var(--color-mol-root);
+  --color-secondary: var(--color-mol-tertiary);
+  --color-secondary-foreground: var(--color-txt-primary);
+  --color-muted: var(--color-mol-secondary);
+  --color-muted-foreground: var(--color-txt-tertiary);
+  --color-accent: var(--color-mol-tertiary);
+  --color-accent-foreground: var(--color-txt-primary);
+  --color-destructive: var(--color-red);
+  --color-destructive-foreground: var(--color-txt-primary);
+  --color-input: var(--color-border-subtle);
+  --color-ring: var(--color-cyan);
+
+  /* Radius — Molly uses sharp/industrial aesthetic */
+  --radius: 0.125rem;
+
+  /* Typography */
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "IBM Plex Sans", sans-serif;
+
+  /* Animations */
+  --animate-pulse-dot: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-scan-line: scan-line 8s linear infinite;
+  --animate-fade-in: fade-in 200ms ease-out;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ============================================================================
+ * Keyframes
+ * ========================================================================= */
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ============================================================================
+ * Base layer
+ * ========================================================================= */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-mono;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply font-sans antialiased overflow-hidden bg-mol-root text-txt-primary;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-mol-root;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-border-strong;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-mol-root);
+  }
+
+  select,
+  input,
+  textarea,
+  option {
+    color-scheme: dark;
+  }
+
+  ::selection {
+    background-color: var(--color-cyan);
+    color: var(--color-mol-root);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-cyan);
+    outline-offset: 1px;
+  }
+
+  /*
+   * Reduced motion — respects the operating-system "reduce motion" setting.
+   *
+   * Disables pulses, shimmers, scans, and other looping animations across
+   * the entire component tree. Fades and one-shot transitions still play
+   * (they're brief and informative).
+   *
+   * `!important` is intentional here: the rules must beat every
+   * component-level animation/transition declaration, including those set
+   * inline by libraries (Base UI, Tailwind's `animate-*` utilities, etc.).
+   * Without it, a more specific selector elsewhere would override the
+   * accessibility preference.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      /* biome-ignore lint/complexity/noImportantStyles: required to beat all
+         component-level animation declarations for a11y override */
+      animation-duration: 0.001ms !important;
+      /* biome-ignore lint/complexity/noImportantStyles: see above */
+      animation-iteration-count: 1 !important;
+      /* biome-ignore lint/complexity/noImportantStyles: see above */
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+/* ============================================================================
+ * Component layer
+ * ========================================================================= */
+
+@layer components {
+  .panel {
+    @apply bg-mol-secondary border border-border-subtle;
+  }
+
+  .panel-inset {
+    @apply bg-mol-primary border border-border-subtle;
+  }
+
+  .label {
+    @apply text-[10px] font-semibold text-txt-tertiary uppercase tracking-widest font-mono;
+  }
+
+  .btn {
+    @apply font-mono text-xs font-semibold px-4 py-2 border cursor-pointer
+           transition-all uppercase tracking-wider inline-flex items-center gap-1.5
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-cyan text-mol-root border-cyan
+           hover:bg-cyan-light
+           disabled:bg-mol-tertiary disabled:text-txt-muted disabled:border-border-subtle;
+  }
+
+  .btn-danger {
+    @apply bg-red/10 text-red border-red/25
+           hover:bg-red/20;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-txt-secondary border-border-subtle
+           hover:bg-mol-tertiary hover:text-txt-primary;
+  }
+
+  .input-base {
+    @apply font-mono bg-mol-primary border border-border-subtle text-txt-primary
+           text-sm px-3 py-2 outline-none transition-colors
+           focus:border-cyan
+           placeholder:text-txt-muted
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input-base option {
+    @apply bg-mol-secondary text-txt-primary;
+  }
+
+  /*
+   * Skip-link — visually hidden until focused. Keyboard users tab into it
+   * first thing on page load and can jump past the chrome to main content.
+   * Screen readers always announce it.
+   */
+  .skip-link {
+    @apply absolute left-2 top-2 z-50 px-3 py-1.5 font-mono text-xs font-semibold
+           bg-cyan text-mol-root border border-cyan
+           -translate-y-20 focus:translate-y-0
+           transition-transform;
+  }
+}
