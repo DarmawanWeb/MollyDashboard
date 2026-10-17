@@ -114,7 +114,7 @@ function poi(
   };
 }
 
-const WALK_SPEED = 0.5; // m/s
+const WALK_SPEED = 0.5; // m/s, the follower's target_linear_velocity
 const TURN_SPEED = 1.2; // rad/s
 const ARRIVE_M = 0.08;
 const SPEAK_MS_PER_CHAR = 55;
@@ -234,6 +234,7 @@ function createMockRobot(): MockRobot {
 
   const listeners = new Set<(s: MockRobotState) => void>();
   let speechId = 0;
+  let walkingSpeed = WALK_SPEED;
   let speechTimer: ReturnType<typeof setTimeout> | null = null;
   let remoteVel = { vx: 0, vy: 0, wz: 0, at: 0 };
   let clock = 0;
@@ -340,7 +341,7 @@ function createMockRobot(): MockRobot {
       state.pose = { x: target.x, y: target.y, yaw: yaw + turn };
       return Math.abs(dyaw) < 0.05;
     }
-    const step = Math.min(dist, WALK_SPEED * dt);
+    const step = Math.min(dist, walkingSpeed * dt);
     const heading = Math.atan2(dy, dx);
     const dyaw = Math.atan2(Math.sin(heading - yaw), Math.cos(heading - yaw));
     state.pose = {
@@ -670,8 +671,11 @@ function createMockRobot(): MockRobot {
     drive: (vx, vy, wz) => {
       remoteVel = { vx, vy, wz, at: clock };
     },
-    getWalkingSpeed: () => later(0.35, 100),
-    setWalkingSpeed: async (speed) => later(ok(`speed ${speed} m/s`), 100),
+    getWalkingSpeed: () => later(walkingSpeed, 100),
+    setWalkingSpeed: async (speed) => {
+      walkingSpeed = speed;
+      return later(ok(`target_linear_velocity ${speed} m/s`), 100);
+    },
 
     listNodes: () =>
       later([
