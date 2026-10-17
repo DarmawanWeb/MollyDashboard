@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, WifiOff } from "lucide-react";
+import { useMockMode } from "@/hooks/use-mock-mode";
 import { useRobotStore } from "@/stores/use-robot-store";
 
 /**
@@ -16,6 +17,7 @@ import { useRobotStore } from "@/stores/use-robot-store";
  */
 export function ConnectionBanner() {
   const status = useRobotStore((s) => s.connectionStatus);
+  const mock = useMockMode();
 
   if (status === "connected") return null;
 
@@ -38,7 +40,8 @@ export function ConnectionBanner() {
       <span>
         {isReconnecting
           ? "Reconnecting to rosbridge…"
-          : "Disconnected from rosbridge — showing mock data"}
+          : "Disconnected from rosbridge"}
+        {mock && " — showing mock data"}
       </span>
     </div>
   );

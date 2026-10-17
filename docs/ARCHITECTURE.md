@@ -108,7 +108,7 @@ DashboardLayout
                └─ {children}   route content
 ```
 
-Mock mode is `env.USE_MOCKS || connection === "disconnected"`. The two sync layers are
+Mock mode is `env.USE_MOCKS || connection !== "connected"`. The two sync layers are
 mutually exclusive: leaving mock mode clears every store so no mock value lingers next to
 live data. `ConnectionProvider` waits for hydration (`useHydrated`) so it connects with the
 saved settings instead of the build defaults.

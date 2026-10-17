@@ -47,7 +47,7 @@ Two ways to run without a robot:
 **1. Explicit flag** — `NEXT_PUBLIC_USE_MOCKS=true` (the default in development). The mock
 robot runs regardless of the connection.
 
-**2. Disconnected fallback** — while rosbridge is disconnected, every build switches to the
+**2. Offline fallback** — until rosbridge is connected, every build switches to the
 mock robot; once the socket opens, the stores are cleared and live data takes over.
 
 `mocks/mock-robot.ts` implements the whole `RobotApi` on an in-memory robot:
