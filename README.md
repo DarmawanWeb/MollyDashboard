@@ -1,5 +1,7 @@
 # Molly Dashboard
 
+[![CI](https://github.com/DarmawanWeb/mollydashboard/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DarmawanWeb/mollydashboard/actions/workflows/ci.yml)
+
 Operator console for **Molly**, the tour-guide robot built on a **Deep Robotics Lite3**
 (Jetson Orin NX, ROS 2 Humble). Built with Next.js 16, React 19 and Tailwind v4.
 
@@ -48,6 +50,16 @@ ros2 launch molly robot.launch.py web:=true
 The robot address, camera server and the driver namespace (`robot` by default, e.g.
 `/robot/battery`) can be changed at runtime in **Settings**; they are saved in the browser.
 
+## Configuration
+
+Build-time defaults from `.env.example` (all `NEXT_PUBLIC_*`, read in `src/lib/env.ts`):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `NEXT_PUBLIC_ROSBRIDGE_URL` | `ws://localhost:9090` | rosbridge WebSocket, `ws://` or `wss://` |
+| `NEXT_PUBLIC_VIDEO_SERVER_URL` | `http://localhost:8080` | web_video_server base |
+| `NEXT_PUBLIC_USE_MOCKS` | `true` in dev, `false` in production | force the mock robot |
+
 ## Routes
 
 | Route | Purpose |
@@ -72,6 +84,7 @@ in `src/lib/ros/topics.ts`. [docs/ROBOT-SIDE.md](docs/ROBOT-SIDE.md) summarizes 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — module layout, data flow, robot API, tour FSM
 - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** — local setup, mock robot, debugging
 - **[docs/ROBOT-SIDE.md](docs/ROBOT-SIDE.md)** — what the robot has to run and expose
+- **[CHANGELOG.md](CHANGELOG.md)** — notable changes
 
 ## Tech Stack
 
