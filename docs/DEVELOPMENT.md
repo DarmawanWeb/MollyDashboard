@@ -1,6 +1,6 @@
 # Development
 
-Local setup, mock mode, and common debugging workflows.
+Local setup, the mock robot, and common debugging workflows.
 
 ## Prerequisites
 
@@ -8,17 +8,17 @@ Local setup, mock mode, and common debugging workflows.
 - pnpm 10+
 
 Optional (for robot integration):
-- A reachable rosbridge_suite endpoint
-- web_video_server for camera streams
+- the Molly stack with the web bridge (`ros2 launch molly robot.launch.py web:=true`)
+- a machine on the robot's network
 
 ## Setup
 
 ```bash
 pnpm install
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-Edit `.env`:
+Edit `.env.local`:
 
 ```bash
 # rosbridge_suite WebSocket endpoint
@@ -27,8 +27,8 @@ NEXT_PUBLIC_ROSBRIDGE_URL=ws://192.168.1.120:9090
 # web_video_server HTTP base
 NEXT_PUBLIC_VIDEO_SERVER_URL=http://192.168.1.120:8080
 
-# Use synthetic data instead of real ROS topics. Defaults to true in dev.
-NEXT_PUBLIC_USE_MOCKS=true
+# Mock robot even when rosbridge is reachable. Defaults to true in dev.
+NEXT_PUBLIC_USE_MOCKS=false
 ```
 
 Then:
@@ -37,31 +37,33 @@ Then:
 pnpm dev
 ```
 
-Open `http://localhost:3000` — auto-redirects to `/monitor`.
+Open `http://localhost:3000` — redirects to `/monitor`. The URLs and the robot namespace can
+also be changed in **Settings → Connection** without a rebuild.
 
-## Mock Mode
+## Mock Robot
 
 Two ways to run without a robot:
 
-**1. Explicit flag** — `NEXT_PUBLIC_USE_MOCKS=true` in `.env`.
+**1. Explicit flag** — `NEXT_PUBLIC_USE_MOCKS=true` (the default in development). The mock
+robot runs regardless of the connection.
 
-Mocks always run, regardless of connection state. Useful for UI work.
+**2. Disconnected fallback** — while rosbridge is disconnected, every build switches to the
+mock robot; once the socket opens, the stores are cleared and live data takes over.
 
-**2. Disconnected fallback** — connection to rosbridge times out → mocks auto-engage.
+`mocks/mock-robot.ts` implements the whole `RobotApi` on an in-memory robot:
 
-`SimulationLayer` reads `connectionStatus` and toggles simulators when state is `disconnected`. Switch back to real data by setting a reachable URL in Settings.
-
-### What's mocked
-
-| Hook / Module | Source |
+| Area | Simulated |
 |---|---|
-| `useOccupancyGrid` | `mocks/occupancy-grid.ts` — 6m × 5m synthetic floor plan |
-| `useRobotSimulation` | random walk in meter coords with bounds reflection |
-| `useTelemetrySimulation` | battery, CPU/GPU temp, IMU jitter |
-| `useFSMSimulation` | cycles FSM state every 8s |
-| `useTourController` | `mocks/tour-runner.ts` — full FSM with 300ms latency |
+| Site | two sites, four POIs with narration and gestures, one tour; save / delete POIs and tours |
+| Mapping | start / stop / save, scan count and known area growing |
+| Localization | localize from a tag, record tags |
+| Walking | go-to with a straight path, arrival heading, cancel; walking speed setting |
+| Tour | `mocks/tour-runner.ts`: navigating → performing_motion → narrating → dwelling, returning |
+| Interaction | speech with duration, stop, gestures, greeter, conversation answers, visitors |
+| Control | AUTO / REMOTE, e-stop, teleop moving the robot, stand / sit, gaits |
+| Telemetry | battery, IMU, Lite3 state, health, `/rosout`-like logs |
 
-The mock occupancy grid is sized to match the default robot pose `(0, 0)` so the robot is visible without manual panning.
+The mock state lives in the page: a full reload starts from the seed again.
 
 ## Common Commands
 
@@ -79,7 +81,7 @@ pnpm check        # lint + type-check + build (CI mirror)
 
 ## Git Hooks
 
-Lefthook runs on commit:
+Lefthook runs on commit (`pnpm prepare` installs it):
 
 ```yaml
 pre-commit:    biome-check, type-check, git add .
@@ -93,56 +95,48 @@ Commit messages follow Conventional Commits (`feat:`, `fix:`, `refactor:`, etc).
 
 ### Check WebSocket Status
 
-Open browser DevTools → Network → WS filter. Look for `ws://your-host:9090` — green means open. The dashboard's footer also shows `connected` / `reconnecting` / `disconnected`.
+Browser DevTools → Network → WS filter: `ws://<robot>:9090` should be open. The footer
+shows `connected` / `reconnecting` / `disconnected` and `mock` while the mock robot runs.
 
-### Inspect Subscribed Topics
+### Watch What the Dashboard Sends
 
-In the browser console:
-
-```js
-// Module-level singleton is reachable from window in dev
-const ros = (await import('/src/lib/ros/index.ts')).getRos();
-ros.getStatus(); // 'connected' | etc
+```bash
+# On the robot:
+ros2 topic echo /bridge/remote_cmd_vel        # drive pad in REMOTE
+ros2 topic echo /tour/state                   # tour commands land here
+ros2 service call /tour/get_state molly_interfaces/srv/GetTourState
 ```
 
 For verbose tracing, set a breakpoint in `client.ts` `handleIncoming()`.
 
 ### Force Reconnect
 
-Settings → Connection → change URL (or just save the same URL). Triggers `configureRos({ url })` which tears down the singleton and rebuilds with new config.
+Settings → Connection → change a field and **Save & reconnect**. `configureRos()` tears down
+the singleton when the URL or namespace changes and the sync hooks re-subscribe.
 
-### Test Without Robot — Use rosbridge from CLI
+### Nothing Arrives From the Robot
 
-If you have a robot reachable but want to verify the dashboard receives a specific message:
-
-```bash
-# On robot (or any machine in the ROS graph):
-ros2 topic pub /tour/state molly_msgs/msg/TourState "{
-  header: {stamp: {sec: 0, nanosec: 0}, frame_id: ''},
-  state: 2,
-  current_poi_index: 1,
-  total_pois: 5,
-  current_poi_id: 'lobby',
-  activity: 'narrating',
-  error_reason: ''
-}" --once
-```
-
-Dashboard should show "Running" with active POI "lobby".
+- rosbridge only exposes the web contract's names (`molly_bridge/config/web_params.yaml`);
+  a topic outside it is silently missing.
+- Driver topics use the robot namespace: `/robot/battery` with the default `robot`. Check
+  Settings → Connection → Robot namespace.
 
 ## Adding a New ROS Topic
 
-1. Define the message shape in `src/types/ros/` (or use existing if it's a standard ROS type).
+1. Define the message shape in `src/types/ros/` (or use an existing standard type).
 2. Add an entry to `TOPICS` in `src/lib/ros/topics.ts`:
    ```ts
    MY_TOPIC: topic<MyMessage>("/my_topic", "my_pkg/msg/MyMessage"),
    ```
-3. Subscribe in a component:
-   ```ts
-   const data = useRosTopic(TOPICS.MY_TOPIC, defaultValue);
-   ```
+3. Decode it into a store in `hooks/use-ros-sync.ts` (and feed the same store from the mock
+   robot in `hooks/use-mock-sync.ts`), then read the store with a selector.
 
-TypeScript will infer `data` as `MyMessage`.
+## Adding a Robot Action
+
+1. Add the service to `SERVICES` (types in `types/ros/`).
+2. Add the method to `RobotApi` (`types/ui/robot-api.ts`) and implement it in
+   `lib/robot/live-api.ts` and `mocks/mock-robot.ts`.
+3. Call it from a component with `useRobotAction().run(key, label, () => api.myAction())`.
 
 ## Adding a New Page
 
@@ -155,27 +149,30 @@ TypeScript will infer `data` as `MyMessage`.
      return <RouteError {...props} route="Name" />;
    }
    ```
-3. Add to navigation in `src/constants/tabs.ts`.
+3. Add it to the navigation in `src/constants/tabs.ts`.
 
 ## Performance Tips
 
 - Wrap expensive renderers in `useMemo` when inputs are stable (e.g. `bakeGrid` in OccupancyCanvas)
 - Use Zustand selectors to subscribe to specific fields — don't destructure the whole store
-- For high-frequency topics (>10Hz), throttle in the subscribe call:
+- Throttle high-frequency topics in the subscribe call:
   ```ts
-  ros.subscribe(TOPICS.ODOM, handler, { throttleMs: 100 })
+  ros.subscribe(TOPICS.IMU, handler, { throttleMs: 200 })
   ```
 
 ## Troubleshooting
 
-**"Cannot find module '@/lib/ros'"** — restart TypeScript server in your editor. Path alias is in `tsconfig.json` but editor caches.
+**"Cannot find module '@/lib/ros'"** — restart the TypeScript server in your editor. The path
+alias is in `tsconfig.json` but editors cache.
 
-**"useOccupancyGrid returned null"** — either rosbridge not connected, or `/map` topic not being published by robot. Set `USE_MOCKS=true` to verify the rendering pipeline works.
+**Map stays empty** — the robot publishes `/map` once a site is loaded (or while mapping).
+Load a site on the Mapping page, or check `ros2 topic info /map` on the robot.
 
-**Tour button disabled even though robot is ready** — check the FSM state in the status row. Buttons enable per `canTransition()` rules; if state is stuck in `STARTING`, robot didn't acknowledge within 3s. Real robot needs to publish a `/tour/state` echo for the dashboard to reconcile.
+**Tour refused** — the robot must be localized and in AUTO; the refusal shows as a toast. If
+the state is stuck in `STARTING`, the robot didn't answer within 3 s; check `/tour/control`
+on the robot.
 
-**Toast not appearing** — `ToastViewport` is mounted in `DashboardLayout`. Confirm you're calling `toast.x()` from a route under `/(dashboard)/`. Toasts called from outside the dashboard layout (e.g. root layout) won't render.
+**Drive pad disabled** — switch to REMOTE on the Control page and release the e-stop.
 
-**Map shows empty grid pattern** — that's `CanvasSkeleton`. Means `grid` prop is `null`. Either:
-  - rosbridge is connecting (wait a few seconds), or
-  - `useOccupancyGrid(useMock=false)` was called but you're offline (pass `useMock=true` when disconnected)
+**Toast not appearing** — `ToastViewport` is mounted in `DashboardLayout`; toasts called
+outside `/(dashboard)/` routes don't render.

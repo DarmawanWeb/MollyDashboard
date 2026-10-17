@@ -1,225 +1,92 @@
-# Robot-Side Requirements
+# Robot Side
 
-What needs to exist on the robot (ROS 2 workspace) for the dashboard to function fully. The dashboard talks to the robot over **rosbridge_suite** WebSocket — all interactions are publish/subscribe or service calls.
+What the robot has to run and expose for the dashboard. The authoritative list of names
+and types is Molly's [docs/web.md](https://github.com/DarmawanRobotics/Molly/blob/main/docs/web.md)
+(and [interfaces.md](https://github.com/DarmawanRobotics/Molly/blob/main/docs/interfaces.md));
+`src/lib/ros/topics.ts` mirrors it. This page is the short version.
 
-## Required Packages
+## Processes
 
-### Standard ROS 2
+```bash
+ros2 launch molly robot.launch.py web:=true
+```
 
-- `rosbridge_suite` — WebSocket bridge (this is the entire communication layer)
-- `nav2_bringup` — for `/cmd_vel`, navigation, costmaps
-- `slam_toolbox` — for `/map`, SLAM run/save
-- `web_video_server` — for camera feeds
+`web:=true` (or `WEB=true` in the robot's env file) starts, next to the robot stack:
 
-### Custom
-
-- `molly_msgs` — see [molly_msgs package](#molly_msgs-package) below
-- `tour_fsm` (node, not a package) — see [tour_fsm node](#tour_fsm-node)
-
-## Topics — Subscribed by Dashboard
-
-| Topic | Type | Purpose |
+| Process | Port | Used for |
 |---|---|---|
-| `/map` | `nav_msgs/msg/OccupancyGrid` | SLAM map display |
-| `/odom` | `nav_msgs/msg/Odometry` | Robot pose |
-| `/imu/data` | `sensor_msgs/msg/Imu` | Orientation, accel |
-| `/battery_state` | `sensor_msgs/msg/BatteryState` | Battery telemetry |
-| `/camera/color/image_raw/compressed` | `sensor_msgs/msg/CompressedImage` | RGB stream |
-| `/camera/depth/image_raw/compressed` | `sensor_msgs/msg/CompressedImage` | Depth stream |
-| `/molly/fsm_state` | `std_msgs/msg/String` | Robot's internal FSM (granular) |
-| `/tour/state` | `molly_msgs/msg/TourState` | Tour FSM authoritative state |
+| `rosbridge_websocket` (+ `rosapi`) | 9090 | every topic and service below |
+| `web_video_server` | 8080 | camera MJPEG `/stream?topic=/camera/camera/color/image_raw&type=mjpeg` |
 
-## Topics — Published by Dashboard
+rosbridge only exposes the names of the web contract (`molly_bridge/config/web_params.yaml`).
+The dashboard never publishes the driver's `/<robot>/cmd_vel`: teleop goes to
+`/bridge/remote_cmd_vel`, through the control mux (e-stop, speed envelope, protective field).
+Keep the web ports on the robot's own network.
 
-| Topic | Type | Purpose |
+## Robot Namespace
+
+Driver names live under a namespace, `robot` by default (`/robot/battery`, `/robot/state`,
+`/robot/stand_up`). The registry writes them as `/{robot}/…` and the client resolves the
+placeholder with the namespace from Settings.
+
+## Subscribed (latched where it matters)
+
+| Topic | Type | Shown in |
 |---|---|---|
-| `/cmd_vel` | `geometry_msgs/msg/Twist` | Teleop |
-| `/molly/fsm_command` | `std_msgs/msg/String` | High-level FSM commands |
-| `/molly/motion` | `std_msgs/msg/String` | Motion gestures (wave, bow, etc.) |
-| `/tour/cmd` | `molly_msgs/msg/TourCommand` | Tour control intent |
-| `/slam_toolbox/start_slam` | `std_msgs/msg/Empty` | SLAM start |
-| `/slam_toolbox/stop_slam` | `std_msgs/msg/Empty` | SLAM stop |
+| `/map` | `nav_msgs/msg/OccupancyGrid` | maps (rows are bottom-up, flipped for the canvas) |
+| `/localization/pose`, `/localization/status` | `geometry_msgs/msg/PoseStamped`, `std_msgs/msg/String` | robot on the map, localization |
+| `/site/status`, `/site/pois`, `/site/tours` | `SiteStatus`, `PoiArray`, `TourArray` | site, POIs, tours |
+| `/mapping/status` | `MappingStatus` | mapping panel |
+| `/planner/status`, `/planner/path`, `/navigation/status` | `PlannerStatus`, `nav_msgs/msg/Path`, `NavigationStatus` | walk-to, path on the map |
+| `/tour/state` | `TourState` | tour control |
+| `/interaction/speech_status`, `/interaction/greeter`, `/interaction/conversation` | `SpeechStatus`, `String` (JSON), `String` (JSON) | speech, greeter, conversation |
+| `/perception/visitors` | `Visitors` | visitors on the map and panel |
+| `/bridge/mode`, `/bridge/estop_engaged`, `/bridge/estop_reason`, `/bridge/protective_field` | `String`, `Bool`, `String`, `String` | mode, e-stop, field |
+| `/health/status`, `/odometry/status` | `String` (JSON), `String` | system page, footer |
+| `/{robot}/battery`, `/{robot}/imu`, `/{robot}/state` | `BatteryState`, `Imu`, `lite3_interfaces/msg/RobotState` | robot status |
+| `/rosout` | `rcl_interfaces/msg/Log` | log viewer |
+
+`molly_interfaces` types are `molly_interfaces/msg/<Name>` on the wire.
+
+## Published
+
+| Topic | Type | Use |
+|---|---|---|
+| `/bridge/remote_cmd_vel` | `geometry_msgs/msg/Twist` | hold-to-drive at 10 Hz, zero on release (REMOTE mode only) |
+| `/tour/cmd` | `TourCommand` | fallback when `/tour/control` does not answer |
 
 ## Services
 
-| Service | Type | Purpose |
-|---|---|---|
-| `/slam_toolbox/save_map` | `slam_toolbox/srv/SaveMap` | Persist current map |
-| `/nav2_param_server/set_parameters` | `rcl_interfaces/srv/SetParameters` | Update Nav2 config |
-| `/tour/get_state` | `molly_msgs/srv/GetTourState` | Snapshot tour state on (re)connect |
+| Service | Use |
+|---|---|
+| `/site/list`, `/site/load` | site picker |
+| `/mapping/start`, `/mapping/stop`, `/mapping/save` | record a map |
+| `/localization/start`, `/localization/record_tags` | localize from a tag, record the tags in view |
+| `/site/save_poi`, `/site/delete_poi`, `/site/save_tour`, `/site/delete_tour` | POI and tour editors |
+| `/planner/go_to`, `/planner/cancel` | walk to a POI |
+| `/tour/control`, `/tour/get_state` | tour commands, state on (re)connect |
+| `/interaction/say`, `/interaction/stop_speech`, `/interaction/gesture`, `/interaction/greet`, `/interaction/set_greeter`, `/interaction/ask` | speech, gestures, greeter, conversation |
+| `/bridge/set_mode`, `/bridge/estop` | AUTO / REMOTE, software e-stop |
+| `/{robot}/stand_up`, `/{robot}/sit_down`, `/{robot}/gait_slow`, `gait_medium`, `gait_fast` | robot actions (`std_srvs/srv/Trigger`) |
+| `/path_follower_node/get_parameters`, `/path_follower_node/set_parameters` | walking speed (`target_linear_velocity`) |
+| `/rosapi/nodes`, `/rosapi/topics` | system page |
 
-## molly_msgs Package
+Registered but not used by a page yet: `/planner/plan` (path preview), `/navigation/pause`,
+`/interaction/say_text` (quick phrases go through `/interaction/say`) and
+`/{robot}/diagnostics`.
 
-Custom interfaces for tour FSM. Build skeleton:
+## Tour Authority
 
-```
-molly_msgs/
-├── CMakeLists.txt
-├── package.xml
-├── msg/
-│   ├── TourCommand.msg
-│   └── TourState.msg
-└── srv/
-    └── GetTourState.srv
-```
+The robot's guide node owns the tour state machine. The dashboard sends commands with
+`/tour/control` (`START` with a `tour_id` or a list of `poi_ids`, `PAUSE`, `RESUME`, `SKIP`,
+`STOP`), shows a short optimistic `STARTING` / `STOPPING`, and always takes `/tour/state` as
+the truth. A refusal comes back in the service answer and shows as a toast; without an answer
+in 3 s the dashboard shows `ERROR`.
 
-A ready-to-build package is bundled separately. Drop into `~/ros2_ws/src/` and:
-
-```bash
-cd ~/ros2_ws
-colcon build --packages-select molly_msgs
-source install/setup.bash
-```
-
-Verify:
+## Checking From the Robot
 
 ```bash
-ros2 interface show molly_msgs/msg/TourState
-ros2 interface show molly_msgs/msg/TourCommand
-ros2 interface show molly_msgs/srv/GetTourState
-```
-
-## tour_fsm Node
-
-Owns the authoritative tour state machine. Implementation responsibilities:
-
-1. **Hold current state** as a member variable, defaulting to `STATE_IDLE`
-2. **Subscribe** `/tour/cmd`:
-   - Validate transition (see matrix below)
-   - If valid: transition through pending state (`STARTING`/`STOPPING`) where applicable, execute primitives (nav2 goal, narration, motion), then land in terminal state
-   - If invalid: silently ignore but **still republish current state** so dashboard reconciles
-3. **Publish** `/tour/state` on every state change (recommended QoS: reliable, depth 1, transient_local so late-joining subscribers get last value)
-4. **Implement** `/tour/get_state` service — returns the last-published state
-
-### Transition Matrix
-
-| Current state | START | PAUSE | RESUME | STOP | SKIP |
-|---|---|---|---|---|---|
-| IDLE | → STARTING | reject | reject | reject | reject |
-| STARTING | reject | reject | reject | → STOPPING | reject |
-| RUNNING | reject | → PAUSED | reject | → STOPPING | (no state change, advance idx) |
-| PAUSED | reject | reject | → RUNNING | → STOPPING | reject |
-| STOPPING | reject | reject | reject | reject | reject |
-| ERROR | → STARTING | reject | reject | → IDLE | reject |
-
-### Skeleton (Python)
-
-```python
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-from std_msgs.msg import Header
-from molly_msgs.msg import TourState, TourCommand
-from molly_msgs.srv import GetTourState
-
-
-class TourFsm(Node):
-    def __init__(self):
-        super().__init__("tour_fsm")
-
-        self.state = TourState()
-        self.state.state = TourState.STATE_IDLE
-        self.state.current_poi_index = -1
-        self.poi_ids = []
-
-        qos = QoSProfile(
-            reliability=ReliabilityPolicy.RELIABLE,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
-            depth=1,
-        )
-        self.state_pub = self.create_publisher(TourState, "/tour/state", qos)
-        self.create_subscription(TourCommand, "/tour/cmd", self.on_cmd, 10)
-        self.create_service(GetTourState, "/tour/get_state", self.on_get_state)
-
-        self.publish_state()
-
-    def on_cmd(self, msg: TourCommand):
-        if not self.can_transition(msg.kind):
-            self.publish_state()  # republish so dashboard reconciles
-            return
-        # ... transition + execute primitives
-        self.publish_state()
-
-    def on_get_state(self, _req, res):
-        res.state = self.state
-        return res
-
-    def publish_state(self):
-        self.state.header = Header()
-        self.state.header.stamp = self.get_clock().now().to_msg()
-        self.state_pub.publish(self.state)
-
-    def can_transition(self, kind: int) -> bool:
-        # Implement matrix above
-        ...
-
-
-def main():
-    rclpy.init()
-    rclpy.spin(TourFsm())
-
-
-if __name__ == "__main__":
-    main()
-```
-
-### Integration with Nav2 / TTS / Motion
-
-When transitioning into `RUNNING`, the node should orchestrate:
-
-- **`navigating`** — send `NavigateToPose` action to nav2 with the current POI's pose
-- **`narrating`** — call TTS service or publish to TTS topic with POI's `narration_text`
-- **`performing_motion`** — execute motion (wave, bow, etc.) based on POI's `motion_action`
-
-Activity changes also republish `/tour/state` with updated `activity` field. Dashboard reflects these as status hints.
-
-## Camera Streams
-
-`web_video_server` publishes MJPEG over HTTP. Dashboard's `<CameraFeed>` consumes:
-
-```
-http://${VIDEO_SERVER_URL}/stream?topic=/camera/color/image_raw
-```
-
-Make sure the host running web_video_server is reachable from the dashboard host (CORS / firewall).
-
-## Recommended QoS Settings
-
-| Topic | Reliability | Durability | Depth | Notes |
-|---|---|---|---|---|
-| `/map` | reliable | transient_local | 1 | Latched so late subscribers get current map immediately |
-| `/odom` | best_effort | volatile | 10 | High-rate, occasional drops OK |
-| `/tour/state` | reliable | transient_local | 1 | Critical — late join must get current state |
-| `/tour/cmd` | reliable | volatile | 10 | Critical |
-| `/cmd_vel` | best_effort | volatile | 1 | Watchdog will zero on stale anyway |
-
-## Network Setup
-
-Dashboard connects via WebSocket. Default rosbridge runs on port 9090:
-
-```bash
-# On robot:
-ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:=9090
-```
-
-If accessing from a different machine, set `ROS_DOMAIN_ID` consistently and ensure port 9090 is open. The dashboard's connection settings (`/settings` → Connection) can point to any reachable rosbridge host — `ws://192.168.1.120:9090` for LAN deploys.
-
-## Testing the Wire from CLI
-
-Useful smoke tests without the dashboard:
-
-```bash
-# Verify rosbridge is up
-curl -i http://your-robot:9090
-# Should return 426 Upgrade Required (means WS is listening)
-
-# Watch what dashboard sends:
-ros2 topic echo /tour/cmd
-ros2 topic echo /cmd_vel
-
-# Send a fake state to dashboard:
-ros2 topic pub /tour/state molly_msgs/msg/TourState "{...}" --once
-
-# Test service:
-ros2 service call /tour/get_state molly_msgs/srv/GetTourState "{}"
+ros2 topic echo /tour/state --once
+ros2 service call /tour/get_state molly_interfaces/srv/GetTourState
+ros2 topic echo /bridge/remote_cmd_vel     # while holding a drive key in REMOTE
 ```
