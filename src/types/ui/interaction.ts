@@ -2,6 +2,8 @@
  * Visitor interaction types: speech, greeter, conversation, visitors.
  */
 
+import type { Language } from "./poi";
+
 export type SpeechState = "idle" | "speaking" | "done" | "failed" | "cancelled";
 
 export interface SpeechSnapshot {
@@ -49,4 +51,10 @@ export interface VisitorsSnapshot {
   nearest: number | null;
   nearestFront: number | null;
   nearestBehind: number | null;
+}
+
+/** A one-tap phrase on the speech panel. */
+export interface QuickPhrase {
+  text: string;
+  language: Language;
 }

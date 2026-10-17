@@ -1,6 +1,7 @@
 "use client";
 
 import { ConnectionSection } from "./_components/connection-section";
+import { InteractionSection } from "./_components/interaction-section";
 import { VideoSection } from "./_components/video-section";
 
 export default function SettingsPage() {
@@ -17,6 +18,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ConnectionSection />
         <VideoSection />
+        <InteractionSection />
       </div>
     </div>
   );

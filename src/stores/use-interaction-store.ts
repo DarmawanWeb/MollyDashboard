@@ -26,6 +26,7 @@ interface InteractionStore {
   addConversation: (entry: ConversationEntry) => void;
   /** Replace a pending entry by id with its answer. */
   resolveConversation: (id: string, patch: Partial<ConversationEntry>) => void;
+  clearConversation: () => void;
   /** Forget the robot-reported state (the conversation history stays). */
   reset: () => void;
 }
@@ -72,5 +73,6 @@ export const useInteractionStore = create<InteractionStore>((set) => ({
         e.id === id ? { ...e, ...patch, pending: false } : e,
       ),
     })),
+  clearConversation: () => set({ conversation: [] }),
   reset: () => set(INITIAL),
 }));

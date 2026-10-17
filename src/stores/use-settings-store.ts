@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Language } from "@/types";
+import type { Language, QuickPhrase } from "@/types";
 
 /* ----------------------------------------------------------------------------
  * Schema
@@ -34,8 +34,8 @@ export interface TeleopConfig {
 export interface InteractionConfig {
   /** Default speech / conversation language */
   language: Language;
-  /** One-tap phrases on the interaction panel */
-  quickPhrases: string[];
+  /** One-tap phrases on the speech panel */
+  quickPhrases: QuickPhrase[];
 }
 
 interface SettingsState {
@@ -55,6 +55,17 @@ interface SettingsState {
  * Defaults
  * ------------------------------------------------------------------------- */
 
+const DEFAULT_PHRASES: QuickPhrase[] = [
+  {
+    text: "Selamat datang! Saya Molly, pemandu Anda hari ini.",
+    language: "id",
+  },
+  { text: "Silakan ikuti saya.", language: "id" },
+  { text: "Mohon beri jalan, terima kasih.", language: "id" },
+  { text: "Terima kasih atas kunjungan Anda!", language: "id" },
+  { text: "Welcome! I am Molly, your guide today.", language: "en" },
+];
+
 const DEFAULTS = {
   connection: {
     rosbridgeUrl: "",
@@ -72,13 +83,7 @@ const DEFAULTS = {
   },
   interaction: {
     language: "id" as Language,
-    quickPhrases: [
-      "Selamat datang! Saya Molly, pemandu Anda hari ini.",
-      "Silakan ikuti saya.",
-      "Mohon beri jalan, terima kasih.",
-      "Terima kasih atas kunjungan Anda!",
-      "Welcome! I am Molly, your guide today.",
-    ],
+    quickPhrases: DEFAULT_PHRASES,
   },
 } as const satisfies Pick<
   SettingsState,
