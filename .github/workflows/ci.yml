@@ -62,3 +62,16 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+  docker:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: docker compose config --quiet
+      - run: docker build -t molly/dashboard:ci .
+      - name: Serve the image on the deployment port
+        run: |
+          docker run -d --name molly -p 127.0.0.1:4470:3000 molly/dashboard:ci
+          curl -fsS --retry 15 --retry-delay 2 --retry-all-errors -o /dev/null http://127.0.0.1:4470/monitor
