@@ -13,10 +13,12 @@
  *     MollyNumberInput,
  *     MollyTextarea,
  *     MollySwitch,
+ *     MollyConfirmButton,
  *   } from "@/components/ui/molly";
  */
 
 export { MollyButton } from "./button";
+export { MollyConfirmButton } from "./confirm-button";
 export { MollyField } from "./field";
 export { MollyInput } from "./input";
 export { MollyNumberInput } from "./number-input";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { MollyButton } from "@/components/ui/molly/button";
+import { MollyButton, MollyConfirmButton } from "@/components/ui/molly";
 import { cn } from "@/lib/utils";
 import type { POI } from "@/types";
 
@@ -74,14 +74,14 @@ export function POIListItem({
         >
           Edit
         </MollyButton>
-        <MollyButton
+        <MollyConfirmButton
           variant="danger"
           size="sm"
-          onClick={onDelete}
+          onConfirm={onDelete}
           aria-label={`Delete ${poi.name}`}
         >
           <Trash2 size={11} />
-        </MollyButton>
+        </MollyConfirmButton>
       </div>
     </div>
   );
