@@ -1,55 +1,64 @@
 "use client";
 
+import { Crosshair } from "lucide-react";
 import { MollyButton } from "@/components/ui/molly/button";
 import { MollyField } from "@/components/ui/molly/field";
 import { MollyInput } from "@/components/ui/molly/input";
 import { MollyNumberInput } from "@/components/ui/molly/number-input";
 import { MollySelect } from "@/components/ui/molly/select";
 import { MollyTextarea } from "@/components/ui/molly/textarea";
-import type { MotionAction } from "@/types";
-import { MOTION_ACTIONS } from "../_data/motion-actions";
-import type { POIForm as POIFormValues } from "../_hooks/use-poi-editor";
+import { GESTURE_OPTIONS, LANGUAGE_OPTIONS } from "@/constants/gestures";
+import { parseLanguage } from "@/lib/site/codec";
+import type { POI } from "@/types";
 
 interface POIFormProps {
-  mode: "create" | "edit";
-  value: POIFormValues;
-  onChange: (
-    next: POIFormValues | ((prev: POIFormValues) => POIFormValues),
-  ) => void;
+  value: POI;
+  atRobotPose: boolean;
+  saving: boolean;
+  onChange: (patch: Partial<POI>) => void;
+  onPickOnMap: () => void;
   onSave: () => void;
   onCancel: () => void;
 }
+
+const toDeg = (rad: number) => Math.round((rad * 180) / Math.PI);
 
 /**
  * POI editor form. Pure presentation — all state lives in usePoiEditor.
  *
  * Submission is disabled until the name field is non-empty (trimmed), since
- * name is the only user-required field. Dwell time is clamped at the input
- * level via min/max but additional sanitization happens in saveForm().
+ * name is the only user-required field. The robot assigns the id of a new
+ * POI from its name.
  */
 export function POIForm({
-  mode,
   value,
+  atRobotPose,
+  saving,
   onChange,
+  onPickOnMap,
   onSave,
   onCancel,
 }: POIFormProps) {
-  const canSave = value.name.trim().length > 0;
-  const motionOptions = MOTION_ACTIONS.map((m) => ({
-    value: m.value,
-    label: m.label,
-  }));
+  const canSave = value.name.trim().length > 0 && !saving;
+  const isNew = value.id === "";
 
   return (
     <div className="panel-inset p-3 flex flex-col gap-3">
-      <span className="label">{mode === "edit" ? "Edit POI" : "New POI"}</span>
+      <div className="flex items-center justify-between">
+        <span className="label">{isNew ? "New POI" : `Edit ${value.id}`}</span>
+        <span className="font-mono text-[10px] text-txt-muted">
+          {atRobotPose
+            ? "at the robot's pose"
+            : `${value.x.toFixed(2)}, ${value.y.toFixed(2)} m · ${toDeg(value.yaw)}°`}
+        </span>
+      </div>
 
       <MollyField label="Name" htmlFor="poi-name" required>
         <MollyInput
           id="poi-name"
           placeholder="e.g. Lobby entrance"
           value={value.name}
-          onChange={(e) => onChange((f) => ({ ...f, name: e.target.value }))}
+          onChange={(e) => onChange({ name: e.target.value })}
           autoFocus
         />
       </MollyField>
@@ -57,53 +66,57 @@ export function POIForm({
       <MollyField label="Description" htmlFor="poi-desc">
         <MollyInput
           id="poi-desc"
-          placeholder="Short context for operators"
+          placeholder="What visitors see here"
           value={value.description}
-          onChange={(e) =>
-            onChange((f) => ({ ...f, description: e.target.value }))
-          }
+          onChange={(e) => onChange({ description: e.target.value })}
         />
       </MollyField>
 
       <MollyField
         label="Narration"
         htmlFor="poi-narration"
-        hint="Spoken by the robot when stopping here"
+        hint="Spoken by the robot on arrival"
       >
         <MollyTextarea
           id="poi-narration"
-          placeholder="Welcome to the lobby…"
+          placeholder="Selamat datang di…"
           rows={3}
-          value={value.narrationText}
-          onChange={(e) =>
-            onChange((f) => ({ ...f, narrationText: e.target.value }))
-          }
+          value={value.narration}
+          onChange={(e) => onChange({ narration: e.target.value })}
         />
       </MollyField>
 
       <div className="grid grid-cols-2 gap-2">
-        <MollyField label="Motion" htmlFor="poi-motion">
+        <MollyField label="Language" htmlFor="poi-language">
           <MollySelect
-            id="poi-motion"
-            value={value.motionAction}
-            onChange={(v) =>
-              onChange((f) => ({ ...f, motionAction: v as MotionAction }))
-            }
-            options={motionOptions}
+            id="poi-language"
+            value={value.language}
+            onChange={(v) => onChange({ language: parseLanguage(v) })}
+            options={LANGUAGE_OPTIONS}
           />
         </MollyField>
 
-        <MollyField label="Dwell (s)" htmlFor="poi-dwell">
-          <MollyNumberInput
-            id="poi-dwell"
-            min={5}
-            max={300}
-            step={1}
-            value={value.dwellTimeSec}
-            onChange={(n) => onChange((f) => ({ ...f, dwellTimeSec: n ?? 30 }))}
+        <MollyField label="Gesture" htmlFor="poi-gesture">
+          <MollySelect
+            id="poi-gesture"
+            value={value.gesture}
+            onChange={(v) => onChange({ gesture: v })}
+            options={GESTURE_OPTIONS}
           />
         </MollyField>
       </div>
+
+      <MollyField label="Dwell after narration (s)" htmlFor="poi-dwell">
+        <MollyNumberInput
+          id="poi-dwell"
+          min={0}
+          max={600}
+          step={1}
+          precision={0}
+          value={value.dwellSec}
+          onChange={(n) => onChange({ dwellSec: n })}
+        />
+      </MollyField>
 
       <div className="flex gap-1.5 pt-1">
         <MollyButton
@@ -112,7 +125,14 @@ export function POIForm({
           disabled={!canSave}
           className="flex-1 justify-center"
         >
-          {mode === "edit" ? "Update" : "Add POI"}
+          {saving ? "Saving…" : isNew ? "Add POI" : "Update"}
+        </MollyButton>
+        <MollyButton
+          variant="ghost"
+          onClick={onPickOnMap}
+          title="Click the map for the position, drag for the heading"
+        >
+          <Crosshair size={12} /> Map
         </MollyButton>
         <MollyButton variant="ghost" onClick={onCancel}>
           Cancel

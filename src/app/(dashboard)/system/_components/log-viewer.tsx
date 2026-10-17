@@ -15,51 +15,10 @@ import {
   MollySelect,
   type MollySelectOption,
 } from "@/components/ui/molly";
+import { useSystemStore } from "@/stores/use-system-store";
+import type { LogLevel } from "@/types";
 
-type LogLevel = "info" | "warn" | "error" | "debug";
 type LogFilter = LogLevel | "all";
-
-type LogEntry = {
-  id: number;
-  timestamp: string;
-  level: LogLevel;
-  node: string;
-  message: string;
-};
-
-let _idCounter = 0;
-function genLog(i: number): LogEntry {
-  const levels: LogLevel[] = ["info", "warn", "error", "debug"];
-  const nodes = [
-    "/bt_navigator",
-    "/llm_bridge",
-    "/fsm_controller",
-    "/nav2_core",
-    "/slam_toolbox",
-  ];
-  const messages = [
-    "Initialized successfully",
-    "Goal accepted",
-    "Publishing cmd_vel",
-    "Map update received",
-    "Costmap clearing",
-    "Plan computed",
-    "BT tick",
-    "Connection timeout",
-    "Recovery started",
-    "Waypoint reached",
-    "LLM response received",
-    "FSM state change",
-    "Sensor data ok",
-  ];
-  return {
-    id: _idCounter++,
-    timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
-    level: levels[i % levels.length],
-    node: nodes[i % nodes.length],
-    message: `${messages[i % messages.length]} (#${i})`,
-  };
-}
 
 const ROW_HEIGHT = 28;
 const OVERSCAN = 5;
@@ -68,6 +27,7 @@ const COLOR: Record<LogLevel, string> = {
   info: "text-cyan",
   warn: "text-amber",
   error: "text-red",
+  fatal: "text-red",
   debug: "text-txt-muted",
 };
 
@@ -76,6 +36,7 @@ const LEVEL_OPTIONS: ReadonlyArray<MollySelectOption<LogFilter>> = [
   { value: "info", label: "Info" },
   { value: "warn", label: "Warn" },
   { value: "error", label: "Error" },
+  { value: "fatal", label: "Fatal" },
   { value: "debug", label: "Debug" },
 ];
 
@@ -90,10 +51,12 @@ type VirtualizerStyle = CSSProperties & {
   "--offset-y": string;
 };
 
+/**
+ * Virtualized viewer of the robot's /rosout (or the mock's log lines).
+ */
 export default function LogViewer() {
-  const [logs, setLogs] = useState<LogEntry[]>(() =>
-    Array.from({ length: 50 }, (_, i) => genLog(i)),
-  );
+  const logs = useSystemStore((s) => s.logs);
+  const clearLogs = useSystemStore((s) => s.clearLogs);
   const [filter, setFilter] = useState<LogFilter>("all");
   const [search, setSearch] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
@@ -107,16 +70,6 @@ export default function LogViewer() {
     });
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setLogs((prev) => {
-        const next = [...prev.slice(-2000), genLog(prev.length)];
-        return next;
-      });
-    }, 800);
-    return () => clearInterval(id);
   }, []);
 
   const filtered = useMemo(() => {
@@ -185,6 +138,10 @@ export default function LogViewer() {
           ({filtered.length})
         </span>
         <div className="flex-1" />
+
+        <MollyButton variant="ghost" size="xs" onClick={clearLogs}>
+          Clear
+        </MollyButton>
 
         {!autoScroll && (
           <MollyButton

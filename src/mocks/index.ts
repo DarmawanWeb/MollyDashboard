@@ -1,10 +1,19 @@
 /**
  * Centralized mock data for development and offline mode.
  *
- * Mocks are gated by env.USE_MOCKS or by checking connectionStatus —
- * see SimulationLayer and the various components that pass `useMock`
- * flags into their data hooks.
+ * Mocks run when env.USE_MOCKS is set or rosbridge is disconnected — see
+ * SimulationLayer (state) and useRobotApi (actions).
  */
 
+export {
+  getMockRobot,
+  type MockRobot,
+  type MockRobotState,
+} from "./mock-robot";
 export { getMockOccupancyGrid } from "./occupancy-grid";
-export { createMockTourRunner, type MockTourRunner } from "./tour-runner";
+export {
+  createMockTourRunner,
+  type MockTourPlan,
+  type MockTourResolver,
+  type MockTourRunner,
+} from "./tour-runner";

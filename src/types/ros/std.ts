@@ -29,3 +29,21 @@ export interface StdFloat32 {
 export interface StdFloat64 {
   data: number;
 }
+
+/* ----------------------------------------------------------------------------
+ * std_srvs/*
+ * ------------------------------------------------------------------------- */
+
+/** std_srvs/srv/Trigger request */
+export type TriggerRequest = Record<string, never>;
+
+/** std_srvs/srv/SetBool request */
+export interface SetBoolRequest {
+  data: boolean;
+}
+
+/** std_srvs/srv/Trigger and std_srvs/srv/SetBool response */
+export interface TriggerResponse {
+  success: boolean;
+  message: string;
+}

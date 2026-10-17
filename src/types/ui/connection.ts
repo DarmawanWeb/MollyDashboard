@@ -1,14 +1,13 @@
 /**
- * UI-side connection and stream configuration types.
+ * UI-side connection and video stream configuration types.
  */
 
 export type ConnectionStatus = "connected" | "disconnected" | "reconnecting";
 
-export type StreamFormat = "mjpeg" | "h264" | "vp8";
-
-export interface StreamConfig {
-  resolution: string;
-  fps: number;
+/** web_video_server MJPEG options */
+export interface VideoStreamConfig {
+  /** JPEG quality 1..100 */
   quality: number;
-  format: StreamFormat;
+  /** Frame width in pixels (height follows the aspect ratio) */
+  width: number;
 }

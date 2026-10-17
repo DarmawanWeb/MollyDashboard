@@ -1,17 +1,15 @@
 "use client";
 
-import { Bot, OctagonX } from "lucide-react";
+import { Bot } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { ActivityBadge } from "@/components/robot";
 import { TABS } from "@/constants/tabs";
 import { cn } from "@/lib/utils";
-import { useRobotStore } from "@/stores/use-robot-store";
+import { EstopButton } from "./estop-button";
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-
-  const isEstop = useRobotStore((state) => state.isEstop);
-  const toggleEstop = useRobotStore((state) => state.toggleEstop);
 
   return (
     <header className="h-13 shrink-0 border-b border-border-subtle bg-mol-primary px-5">
@@ -27,26 +25,14 @@ export function Header() {
               <span className="font-mono text-base font-bold tracking-tight">
                 MOLLY
               </span>
-              <span className="text-[11px] text-txt-muted">v0.1.0</span>
+              <span className="text-[11px] text-txt-muted">v0.2.0</span>
             </div>
           </div>
 
           {/* E-STOP */}
           <div className="h-6 w-px bg-border-subtle" />
-
-          <button
-            type="button"
-            onClick={toggleEstop}
-            className={cn(
-              "flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider transition-all active:scale-95",
-              isEstop
-                ? "animate-pulse border-red bg-red text-white"
-                : "border-red/30 bg-red/10 text-red hover:bg-red/20",
-            )}
-          >
-            <OctagonX size={14} />
-            {isEstop ? "E-STOP ACTIVE" : "E-STOP"}
-          </button>
+          <EstopButton />
+          <ActivityBadge className="hidden xl:flex" />
         </div>
 
         {/* Tabs */}

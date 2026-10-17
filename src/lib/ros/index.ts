@@ -10,11 +10,11 @@
  *     // grid is typed as OccupancyGrid
  *   });
  *
- *   // publish
- *   getRos().publish(TOPICS.CMD_VEL, makeTwist2D(0.3, 0));
+ *   // publish (teleop goes through the control mux)
+ *   getRos().publish(TOPICS.REMOTE_CMD_VEL, makeTwist(0.3, 0, 0));
  *
  *   // service call
- *   await getRos().callService(SERVICES.SAVE_MAP, { name: "lobby" });
+ *   await getRos().callService(SERVICES.SITE_LOAD, { site: "lobby" });
  */
 
 export { type ClientConfig, RosClient } from "./client";
@@ -38,8 +38,16 @@ export {
   ROBOT_NS_TOKEN,
   resolveName,
 } from "./names";
+export {
+  boolParameter,
+  doubleParameter,
+  numberValue,
+  PARAMETER_TYPE,
+  setParametersError,
+} from "./params";
 export { __resetRos, configureRos, getRos } from "./singleton";
 export {
+  robotCommandService,
   SERVICES,
   type ServiceDef,
   type ServiceKey,

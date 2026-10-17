@@ -50,8 +50,11 @@ const COMMAND_TO_WIRE: Record<TourCommand["kind"], number> = {
 const KNOWN_ACTIVITIES: ReadonlyArray<TourActivity> = [
   "",
   "navigating",
-  "narrating",
+  "waiting_visitors",
   "performing_motion",
+  "narrating",
+  "dwelling",
+  "returning",
 ];
 
 function parseActivity(raw: string): TourActivity {
@@ -74,10 +77,14 @@ export function decodeTourState(wire: TourStateWire): TourStateSnapshot {
   const state = WIRE_TO_STATE[wire.state] ?? "IDLE";
   return {
     state,
+    tourId: wire.tour_id,
+    tourName: wire.tour_name,
     currentPoiIndex: wire.current_poi_index,
     totalPois: wire.total_pois,
     currentPoiId: wire.current_poi_id || null,
+    currentPoiName: wire.current_poi_name,
     activity: parseActivity(wire.activity),
+    message: wire.message,
     timestamp: headerToMs(wire.header),
     errorReason: state === "ERROR" ? wire.error_reason || undefined : undefined,
   };
@@ -93,6 +100,27 @@ export function decodeTourState(wire: TourStateWire): TourStateSnapshot {
 export function encodeTourCommand(cmd: TourCommand): TourCommandWire {
   return {
     kind: COMMAND_TO_WIRE[cmd.kind],
-    poi_ids: cmd.kind === "START" ? cmd.poiIds : [],
+    tour_id: cmd.kind === "START" ? cmd.tourId : "",
+    poi_ids: cmd.kind === "START" && !cmd.tourId ? cmd.poiIds : [],
   };
+}
+
+/** Human-readable label of a tour activity. */
+export function activityLabel(activity: TourActivity): string {
+  switch (activity) {
+    case "navigating":
+      return "Walking";
+    case "waiting_visitors":
+      return "Waiting for visitors";
+    case "performing_motion":
+      return "Gesture";
+    case "narrating":
+      return "Narrating";
+    case "dwelling":
+      return "Dwelling";
+    case "returning":
+      return "Returning";
+    default:
+      return "";
+  }
 }

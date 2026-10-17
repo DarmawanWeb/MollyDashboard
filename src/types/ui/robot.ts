@@ -1,47 +1,78 @@
-export type GaitMode = "STANDARD" | "CRAWL" | "H-STEP" | "STAIR";
+/**
+ * Robot telemetry, control and localization types (UI side).
+ */
 
-export type SpeedMode = "LOW" | "MEDIUM" | "FAST";
-
-/** 2D pose in map frame (yaw in radians, position in meters). */
+/** 2D pose in the map frame (yaw in radians, position in meters). */
 export interface RobotPose {
   x: number;
   y: number;
   yaw: number;
 }
 
-export interface RobotVelocity {
-  /** m/s */
-  linear: number;
-  /** rad/s */
-  angular: number;
-}
-
-/** IMU orientation in degrees (for human-readable display). */
+/** IMU attitude in degrees (for human-readable display). */
 export interface RobotImu {
   roll: number;
   pitch: number;
   yaw: number;
 }
 
-export interface RobotState {
+export interface BatterySnapshot {
   /** 0..100 */
-  battery_percentage: number;
-  /** Celsius */
-  cpu_temp: number;
-  gpu_temp: number;
+  percentage: number;
+  /** V, NaN when unknown */
+  voltage: number;
+  /** A, NaN when unknown */
+  current: number;
+}
 
-  gait_mode: GaitMode;
-  speed_mode: SpeedMode;
+/** Deep Robotics Lite3 driver state (lite3_interfaces/msg/RobotState). */
+export interface Lite3Snapshot {
+  connected: boolean;
+  ageSec: number;
+  basicState: string;
+  gait: string;
+  motion: string;
+  standing: boolean;
+  moving: boolean;
+  balanceLost: boolean;
+  /** m, 0.28..4.5 */
+  ultrasoundFront: number;
+  ultrasoundRear: number;
+  controlMode: string;
+  gesture: string;
+}
 
-  velocity: RobotVelocity;
-  imu: RobotImu;
+export type ControlMode = "auto" | "remote";
 
-  uptime_seconds: number;
+/** State of the control mux protective field. */
+export type ProtectiveField =
+  | "clear"
+  | "limited"
+  | "stop"
+  | "stale"
+  | "off"
+  | "unknown";
 
-  /** 0..100 */
-  cpu_usage: number;
-  gpu_usage: number;
+/** Who drives, and whether the software e-stop holds the robot. */
+export interface ControlSnapshot {
+  mode: ControlMode;
+  estopEngaged: boolean;
+  estopReason: string;
+  field: ProtectiveField;
+}
 
-  ram_used_gb: number;
-  ram_total_gb: number;
+export type LocalizationSource =
+  | "none"
+  | "tag"
+  | "pose_estimate"
+  | "origin"
+  | "unknown";
+
+/** Parsed /localization/status, e.g. "tag:tag_3". */
+export interface LocalizationSnapshot {
+  source: LocalizationSource;
+  localized: boolean;
+  /** Tag frame when source === "tag" */
+  detail: string;
+  raw: string;
 }

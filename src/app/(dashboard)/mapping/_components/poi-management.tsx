@@ -1,8 +1,9 @@
 "use client";
 
-import { MapPin, Plus } from "lucide-react";
+import { LocateFixed, MapPin, Plus } from "lucide-react";
 import { AppSection } from "@/components/layout/app/section";
 import { MollyButton } from "@/components/ui/molly/button";
+import { useSiteStore } from "@/stores/use-site-store";
 import type { UsePoiEditorResult } from "../_hooks/use-poi-editor";
 import { POIForm } from "./poi-form";
 import { POIList } from "./poi-list";
@@ -12,41 +13,57 @@ interface POIManagementProps {
 }
 
 /**
- * Sidebar section: add button → optional form → POI list.
- *
- * Mode (create / edit) is inferred from whether editingId is set —
- * if not editing, we're creating a new POI from the pending coord.
+ * Sidebar section: add (on the map or at the robot) → form → POI list.
+ * The list is the robot's /site/pois of the active site.
  */
 export function POIManagement({ editor }: POIManagementProps) {
-  return (
-    <AppSection title="POI Management" icon={<MapPin size={16} />}>
-      <div className="flex flex-col gap-2">
-        <MollyButton
-          variant="ghost"
-          onClick={editor.startAdd}
-          disabled={editor.addMode || editor.isFormOpen}
-          className="w-full justify-center gap-1.5"
-        >
-          <Plus size={13} />
-          Click map to add POI
-        </MollyButton>
+  const pois = useSiteStore((s) => s.pois);
+  const hasSite = useSiteStore((s) => s.status.site !== "");
+  const busy = editor.placing || editor.draft !== null;
 
-        {editor.isFormOpen && (
+  return (
+    <AppSection title="POIs" icon={<MapPin size={16} />}>
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-1.5">
+          <MollyButton
+            variant="ghost"
+            onClick={editor.startAdd}
+            disabled={!hasSite || busy}
+            className="flex-1 justify-center gap-1.5"
+          >
+            <Plus size={13} />
+            On map
+          </MollyButton>
+          <MollyButton
+            variant="ghost"
+            onClick={editor.startAddAtRobot}
+            disabled={!hasSite || busy}
+            className="flex-1 justify-center gap-1.5"
+            title="New POI where the robot stands, facing its heading"
+          >
+            <LocateFixed size={13} />
+            At robot
+          </MollyButton>
+        </div>
+
+        {editor.draft && (
           <POIForm
-            mode={editor.editingId ? "edit" : "create"}
-            value={editor.form}
-            onChange={editor.setForm}
-            onSave={editor.saveForm}
-            onCancel={editor.cancelForm}
+            value={editor.draft}
+            atRobotPose={editor.atRobotPose}
+            saving={editor.saving}
+            onChange={editor.update}
+            onPickOnMap={editor.startMove}
+            onSave={editor.save}
+            onCancel={editor.cancel}
           />
         )}
 
         <POIList
-          pois={editor.pois}
+          pois={pois}
           selectedId={editor.selectedId}
           onSelect={editor.toggleSelect}
-          onEdit={editor.editPoi}
-          onDelete={editor.deletePoi}
+          onEdit={editor.edit}
+          onDelete={editor.remove}
         />
       </div>
     </AppSection>

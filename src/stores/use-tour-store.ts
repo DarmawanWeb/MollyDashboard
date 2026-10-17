@@ -5,17 +5,37 @@ import type { TourActivity, TourState } from "@/types/ui/tour";
  * Store shape
  * ------------------------------------------------------------------------- */
 
+/** Robot-authoritative fields, as applied from a /tour/state snapshot. */
+export interface TourStorePayload {
+  state: TourState;
+  tourId: string;
+  tourName: string;
+  currentPoiIndex: number;
+  totalPois: number;
+  activePoiId: string | null;
+  activePoiName: string;
+  activity: TourActivity;
+  message: string;
+  errorReason?: string;
+}
+
 interface TourStore {
   /** Current FSM state. Set by useTourController from /tour/state echoes. */
   state: TourState;
 
+  /** Saved tour being run, empty for an ad-hoc list of POIs. */
+  tourId: string;
+  tourName: string;
   /** 0-based index of POI currently being executed. -1 when idle. */
   currentPoiIndex: number;
   totalPois: number;
-  /** UUID of active POI, or null when idle. */
+  /** Id of the active POI, or null when idle. */
   activePoiId: string | null;
+  activePoiName: string;
   /** Sub-activity hint inside RUNNING. */
   activity: TourActivity;
+  /** Robot's detail of the activity. */
+  message: string;
 
   /** Seconds elapsed since tour was last set to RUNNING (client-side timer). */
   elapsed: number;
@@ -36,14 +56,7 @@ interface TourStore {
    * in dev) should call these. All public callers go through
    * useTourController().sendCommand().
    */
-  __applySnapshot: (snapshot: {
-    state: TourState;
-    currentPoiIndex: number;
-    totalPois: number;
-    activePoiId: string | null;
-    activity: TourActivity;
-    errorReason?: string;
-  }) => void;
+  __applySnapshot: (snapshot: TourStorePayload) => void;
   __setOptimistic: (state: TourState) => void;
   __tick: () => void;
   __resetElapsed: () => void;
@@ -55,10 +68,14 @@ interface TourStore {
 
 const IDLE_SNAPSHOT = {
   state: "IDLE" as TourState,
+  tourId: "",
+  tourName: "",
   currentPoiIndex: -1,
   totalPois: 0,
   activePoiId: null,
+  activePoiName: "",
   activity: "" as TourActivity,
+  message: "",
   elapsed: 0,
   errorReason: undefined,
   active: false,
@@ -85,10 +102,14 @@ export const useTourStore = create<TourStore>((set) => ({
         prev.state !== "RUNNING" && s.state === "RUNNING";
       return {
         state: s.state,
+        tourId: s.tourId,
+        tourName: s.tourName,
         currentPoiIndex: s.currentPoiIndex,
         totalPois: s.totalPois,
         activePoiId: s.activePoiId,
+        activePoiName: s.activePoiName,
         activity: s.activity,
+        message: s.message,
         errorReason: s.errorReason,
         active: s.state === "RUNNING" || s.state === "PAUSED",
         elapsed: transitionedToRunning ? 0 : prev.elapsed,

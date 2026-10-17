@@ -1,23 +1,25 @@
 import type { OccupancyGrid } from "@/types/ros";
 import type { POI } from "@/types/ui";
 import { canvasFont, PALETTE } from "../palette";
-import { projectPoiCell, type Viewport } from "../projection";
+import { project, type Viewport } from "../projection";
 
 interface DrawPoisOptions {
   pois: POI[];
   activeId?: string | null;
   hoverId?: string | null;
+  selectedId?: string | null;
   showLabels?: boolean;
 }
 
 /**
- * Draws all POIs as diamonds (rotated squares) with optional label below.
+ * Draws all POIs as diamonds (rotated squares) with a heading tick (the yaw
+ * the robot takes on arrival) and an optional label below.
  *
  * Visual states:
- *   - default:  purple, no halo
- *   - hover:    purple, soft halo
- *   - active:   cyan, strong halo (matches robot color → suggests "this is
- *               where the robot is going / just was")
+ *   - default:            purple, no halo
+ *   - hover / selected:   purple, soft halo
+ *   - active:             cyan, strong halo (matches robot color → suggests
+ *                         "this is where the robot is going / just was")
  *
  * Labels render when `showLabels` is true OR the POI is hovered/active.
  */
@@ -29,14 +31,14 @@ export function drawPois(
   cH: number,
   opts: DrawPoisOptions,
 ): void {
-  const { pois, activeId, hoverId, showLabels = false } = opts;
+  const { pois, activeId, hoverId, selectedId, showLabels = false } = opts;
 
   for (const poi of pois) {
-    const [px, py] = projectPoiCell(poi.x, poi.y, grid, view, cW, cH);
+    const [px, py] = project(poi.x, poi.y, grid, view, cW, cH);
     if (px < -40 || px > cW + 40 || py < -40 || py > cH + 40) continue;
 
     const isActive = poi.id === activeId;
-    const isHover = poi.id === hoverId;
+    const isHover = poi.id === hoverId || poi.id === selectedId;
     const color = isActive ? PALETTE.poiActive : PALETTE.poi;
 
     // halo
@@ -53,6 +55,8 @@ export function drawPois(
       ctx.arc(px, py, haloR, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    drawHeading(ctx, px, py, poi.yaw, color, 15);
 
     // diamond
     const s = 6;
@@ -74,6 +78,27 @@ export function drawPois(
   }
 }
 
+/**
+ * Short line from (px, py) along a map-frame yaw. Canvas y points down, so
+ * the sine component is negated.
+ */
+export function drawHeading(
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  yaw: number,
+  color: string,
+  length: number,
+): void {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(px + Math.cos(yaw) * length, py - Math.sin(yaw) * length);
+  ctx.stroke();
+}
+
 function drawPoiLabel(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -82,7 +107,6 @@ function drawPoiLabel(
 ): void {
   ctx.font = canvasFont(11);
   const padX = 6;
-  const padY = 3;
   const metrics = ctx.measureText(text);
   const w = metrics.width + padX * 2;
   const h = 16;
@@ -99,7 +123,7 @@ function drawPoiLabel(
   ctx.fillStyle = PALETTE.text;
   ctx.textBaseline = "middle";
   ctx.textAlign = "center";
-  ctx.fillText(text, cx, y + h / 2 + padY * 0 + 0.5);
+  ctx.fillText(text, cx, y + h / 2 + 0.5);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 }

@@ -8,7 +8,7 @@ interface POIListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onEdit: (poi: POI) => void;
-  onDelete: (id: string) => void;
+  onDelete: (poi: POI) => void;
 }
 
 export function POIList({
@@ -21,7 +21,7 @@ export function POIList({
   if (pois.length === 0) {
     return (
       <div className="text-xs text-txt-muted text-center py-4">
-        No POIs yet — click the button above to add one.
+        No POIs yet — place one on the map or at the robot.
       </div>
     );
   }
@@ -36,7 +36,7 @@ export function POIList({
           selected={poi.id === selectedId}
           onSelect={() => onSelect(poi.id)}
           onEdit={() => onEdit(poi)}
-          onDelete={() => onDelete(poi.id)}
+          onDelete={() => onDelete(poi)}
         />
       ))}
     </div>

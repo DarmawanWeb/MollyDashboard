@@ -1,14 +1,19 @@
 "use client";
 
-import { formatUptime, useTicker } from "@/hooks/use-ros";
+import { useMockMode } from "@/hooks/use-mock-mode";
 import { cn } from "@/lib/utils";
 import { useRobotStore } from "@/stores/use-robot-store";
+import { useSiteStore } from "@/stores/use-site-store";
+import { useSystemStore } from "@/stores/use-system-store";
+
+const pct = (v: number | null | undefined) =>
+  v === null || v === undefined ? "—" : `${Math.round(v)}%`;
 
 export function Footer() {
-  const robotState = useRobotStore((state) => state.state);
   const connectionStatus = useRobotStore((state) => state.connectionStatus);
-
-  const uptime = useTicker(true, robotState.uptime_seconds);
+  const site = useSiteStore((s) => s.status.site);
+  const health = useSystemStore((s) => s.health);
+  const mock = useMockMode();
 
   const dotClass =
     connectionStatus === "connected"
@@ -33,18 +38,28 @@ export function Footer() {
             className={cn("h-1.5 w-1.5 rounded-full", dotClass)}
           />
           <span className={textClass}>{connectionStatus}</span>
+          {mock && <span className="text-amber">· mock</span>}
         </div>
 
-        <span>ROS 2 Humble</span>
-        <span>Jetson Orin NX</span>
+        <span>Deep Robotics Lite3</span>
+        <span>ROS 2 Humble · Jetson Orin NX</span>
+        <span>{site ? `site ${site}` : "no site"}</span>
       </div>
 
       <div className="flex items-center gap-4">
-        <span>Uptime: {formatUptime(uptime)}</span>
-        <span>CPU: {robotState.cpu_usage}%</span>
-        <span>GPU: {robotState.gpu_usage}%</span>
+        <span>CPU: {pct(health?.cpuPercent)}</span>
+        <span>GPU: {pct(health?.gpuPercent)}</span>
         <span>
-          RAM: {robotState.ram_used_gb}/{robotState.ram_total_gb} GB
+          RAM:{" "}
+          {health?.memoryUsedGb !== null && health?.memoryUsedGb !== undefined
+            ? `${health.memoryUsedGb}/${health.memoryTotalGb ?? "?"} GB`
+            : "—"}
+        </span>
+        <span>
+          Temp:{" "}
+          {health?.cpuTempC !== null && health?.cpuTempC !== undefined
+            ? `${health.cpuTempC}°C`
+            : "—"}
         </span>
       </div>
     </footer>

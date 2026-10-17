@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { env } from "@/lib/env";
 import { getRos, SERVICES, TOPICS } from "@/lib/ros";
 import {
   canTransition,
@@ -14,10 +13,16 @@ import {
   encodeTourCommand,
   type TourStateWire,
 } from "@/lib/tour/messages";
-import { createMockTourRunner } from "@/mocks/tour-runner";
+import { getMockRobot } from "@/mocks/mock-robot";
+import {
+  createMockTourRunner,
+  type MockTourResolver,
+} from "@/mocks/tour-runner";
 import { useRobotStore } from "@/stores/use-robot-store";
-import { useTourStore } from "@/stores/use-tour-store";
+import { toast } from "@/stores/use-toast-store";
+import { type TourStorePayload, useTourStore } from "@/stores/use-tour-store";
 import type { TourCommand, TourStateSnapshot } from "@/types/ui/tour";
+import { useMockMode } from "./use-mock-mode";
 
 const ACK_TIMEOUT_MS = 3000;
 const RESTART_POLL_MS = 100;
@@ -38,12 +43,12 @@ interface UseTourControllerResult {
 
   /**
    * Convenience macro: STOP current tour, wait for IDLE, then START with
-   * the same POI list. Used by the "Restart" button.
+   * the same tour or POI list. Used by the "Restart" button.
    *
    * No-op if state is IDLE (just starts fresh). Cancelled if user issues
    * another command before the IDLE handshake completes.
    */
-  restart: (poiIds: string[]) => void;
+  restart: (start: Extract<TourCommand, { kind: "START" }>) => void;
 
   /** True if any command is rejected as invalid for current state. */
   canSend: (kind: TourCommand["kind"]) => boolean;
@@ -56,16 +61,40 @@ interface UseTourControllerResult {
  * ROS message field name. The store uses `activePoiId` because that's
  * what existing UI consumers reference. We translate at the boundary.
  */
-function snapshotToStorePayload(snap: TourStateSnapshot) {
+function snapshotToStorePayload(snap: TourStateSnapshot): TourStorePayload {
   return {
     state: snap.state,
+    tourId: snap.tourId,
+    tourName: snap.tourName,
     currentPoiIndex: snap.currentPoiIndex,
     totalPois: snap.totalPois,
     activePoiId: snap.currentPoiId,
+    activePoiName: snap.currentPoiName,
     activity: snap.activity,
+    message: snap.message,
     errorReason: snap.errorReason,
   };
 }
+
+/** A START resolved against the mock robot's site (tour or POI list). */
+const resolveMockTour: MockTourResolver = (cmd) => {
+  const { pois, tours } = getMockRobot().getState();
+  const tour = cmd.tourId ? tours.find((t) => t.id === cmd.tourId) : undefined;
+  if (cmd.tourId && !tour) return null;
+  const stop = (id: string) => {
+    const poi = pois.find((p) => p.id === id);
+    return poi ? { id, name: poi.name, gesture: poi.gesture !== "" } : null;
+  };
+  const stops = (tour ? tour.poiIds : cmd.poiIds)
+    .map(stop)
+    .filter((s) => s !== null);
+  return {
+    tourId: tour?.id ?? "",
+    tourName: tour?.name ?? "",
+    stops,
+    returnTo: tour?.returnPoiId ? stop(tour.returnPoiId) : null,
+  };
+};
 
 /**
  * Wire the dashboard to the robot-side tour FSM.
@@ -84,7 +113,7 @@ export function useTourController(): UseTourControllerResult {
   const apply = useTourStore((s) => s.__applySnapshot);
   const setOptimistic = useTourStore((s) => s.__setOptimistic);
   const tick = useTourStore((s) => s.__tick);
-  const connection = useRobotStore((s) => s.connectionStatus);
+  const epoch = useRobotStore((s) => s.rosEpoch);
 
   /** Stash latest store state in a ref so handlers don't recreate on every change. */
   const latestStateRef = useRef(useTourStore.getState());
@@ -99,8 +128,7 @@ export function useTourController(): UseTourControllerResult {
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mock runner lifetime tied to mock mode being active.
-  const offline = connection === "disconnected";
-  const useMock = env.USE_MOCKS || offline;
+  const useMock = useMockMode();
   const mockRef = useRef<ReturnType<typeof createMockTourRunner> | null>(null);
 
   /* ------------------------------------------------------------------------
@@ -128,7 +156,7 @@ export function useTourController(): UseTourControllerResult {
       // Mock path: create local FSM that responds to commands sent via
       // sendCommand (see below). Subscription emits initial state immediately.
       if (mockRef.current) mockRef.current.shutdown();
-      mockRef.current = createMockTourRunner();
+      mockRef.current = createMockTourRunner(resolveMockTour);
       const unsub = mockRef.current.subscribe((snap) => {
         reconcile(snap);
         apply(snapshotToStorePayload(snap));
@@ -142,6 +170,7 @@ export function useTourController(): UseTourControllerResult {
 
     // Real path: subscribe first to avoid missing events while the service
     // call is in flight, then bootstrap with a snapshot.
+    void epoch; // re-subscribe on a rebuilt client
     const ros = getRos();
     const handleWire = (wire: TourStateWire) => {
       const snap = decodeTourState(wire);
@@ -166,7 +195,7 @@ export function useTourController(): UseTourControllerResult {
     return () => {
       unsub();
     };
-  }, [useMock, apply, reconcile]);
+  }, [useMock, epoch, apply, reconcile]);
 
   /* ------------------------------------------------------------------------
    * Client-side elapsed-time ticker
@@ -207,11 +236,24 @@ export function useTourController(): UseTourControllerResult {
         setOptimistic(optimistic);
       }
 
-      // Publish — mock or real
+      // Send — mock or real. The service answers at once; the state still
+      // arrives on /tour/state and wins.
       if (useMock) {
         mockRef.current?.sendCommand(cmd);
       } else {
-        getRos().publish(TOPICS.TOUR_CMD, encodeTourCommand(cmd));
+        getRos()
+          .callService(SERVICES.TOUR_CONTROL, {
+            command: encodeTourCommand(cmd),
+          })
+          .then((res) => {
+            if (!res.success) {
+              toast.warn(`Tour ${cmd.kind.toLowerCase()} refused`, res.message);
+            }
+          })
+          .catch(() => {
+            // older robot without /tour/control: fall back to the topic
+            getRos().publish(TOPICS.TOUR_CMD, encodeTourCommand(cmd));
+          });
       }
 
       // Arm ack timeout for pending states. Mock will respond quickly so
@@ -226,10 +268,14 @@ export function useTourController(): UseTourControllerResult {
           if (isPending(latest.state)) {
             apply({
               state: "ERROR",
+              tourId: latest.tourId,
+              tourName: latest.tourName,
               currentPoiIndex: latest.currentPoiIndex,
               totalPois: latest.totalPois,
               activePoiId: latest.activePoiId,
+              activePoiName: latest.activePoiName,
               activity: "",
+              message: "",
               errorReason: "Robot did not acknowledge command in time",
             });
           }
@@ -246,9 +292,8 @@ export function useTourController(): UseTourControllerResult {
    * --------------------------------------------------------------------- */
 
   const restart = useCallback(
-    (poiIds: string[]) => {
+    (startCmd: Extract<TourCommand, { kind: "START" }>) => {
       const current = latestStateRef.current.state;
-      const startCmd: TourCommand = { kind: "START", poiIds };
 
       // If already idle, just start. If error, also just start.
       if (current === "IDLE" || current === "ERROR") {

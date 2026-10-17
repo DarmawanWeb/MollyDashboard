@@ -33,6 +33,17 @@ export const PALETTE = {
   poi: "#a855f7",
   poiActive: "#22d3ee",
 
+  // planned path and goal
+  path: "rgba(34,211,238,0.85)",
+  goal: "#f59e0b",
+
+  // visitors around the robot
+  visitor: "#f97316",
+  visitorHalo: "rgba(249,115,22,0.25)",
+
+  // POI placement preview
+  placement: "#22c55e",
+
   // text
   text: "#d4d4d8",
   textMuted: "rgba(212,212,216,0.6)",

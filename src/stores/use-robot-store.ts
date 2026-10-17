@@ -1,111 +1,95 @@
 import { create } from "zustand";
 
 import type {
+  BatterySnapshot,
   ConnectionStatus,
-  FSMStateKey,
+  ControlSnapshot,
+  Lite3Snapshot,
+  LocalizationSnapshot,
+  RobotImu,
   RobotPose,
-  RobotState,
 } from "@/types";
 
 interface RobotStore {
-  state: RobotState;
-  pose: RobotPose;
-
-  fsmState: FSMStateKey;
   connectionStatus: ConnectionStatus;
+  /**
+   * Increments whenever the rosbridge client is rebuilt (new URL or robot
+   * namespace) so subscription hooks re-subscribe on the new client.
+   */
+  rosEpoch: number;
 
-  isEstop: boolean;
+  /** map → base_link from /localization/pose, null until localized */
+  pose: RobotPose | null;
+  localization: LocalizationSnapshot;
+  /** /odometry/status: initializing, ok, degraded: …, lost: … */
+  odometry: string;
 
-  setState: (state: Partial<RobotState>) => void;
-  setPose: (pose: RobotPose) => void;
+  battery: BatterySnapshot | null;
+  imu: RobotImu | null;
+  /** Lite3 driver state, null on other robots or before the first message */
+  lite3: Lite3Snapshot | null;
 
-  setFSM: (fsmState: FSMStateKey) => void;
+  /** Control mux: mode, e-stop, protective field */
+  control: ControlSnapshot;
+
   setConnection: (status: ConnectionStatus) => void;
-
-  toggleEstop: () => void;
+  bumpRosEpoch: () => void;
+  setPose: (pose: RobotPose | null) => void;
+  setLocalization: (localization: LocalizationSnapshot) => void;
+  setOdometry: (odometry: string) => void;
+  setBattery: (battery: BatterySnapshot) => void;
+  setImu: (imu: RobotImu) => void;
+  setLite3: (lite3: Lite3Snapshot) => void;
+  setControl: (patch: Partial<ControlSnapshot>) => void;
+  /** Forget everything the robot (or the mock) reported. */
+  resetTelemetry: () => void;
 }
 
-const DEFAULT_STATE: RobotState = {
-  battery_percentage: 78,
-  cpu_temp: 42,
-  gpu_temp: 38,
+const DEFAULT_CONTROL: ControlSnapshot = {
+  mode: "auto",
+  estopEngaged: false,
+  estopReason: "",
+  field: "unknown",
+};
 
-  gait_mode: "STANDARD",
-  speed_mode: "MEDIUM",
-
-  velocity: {
-    linear: 0.35,
-    angular: 0.02,
-  },
-
-  imu: {
-    roll: 0.8,
-    pitch: 1.2,
-    yaw: 45.3,
-  },
-
-  uptime_seconds: 9257,
-
-  cpu_usage: 34,
-  gpu_usage: 21,
-
-  ram_used_gb: 6.2,
-  ram_total_gb: 16,
+const NOT_LOCALIZED: LocalizationSnapshot = {
+  source: "none",
+  localized: false,
+  detail: "",
+  raw: "",
 };
 
 /**
- * Default pose puts the robot near origin (in meters, ROS map frame).
- * Mock grid is 6m × 5m centered at origin, so (0, 0) shows the robot in
- * the middle of the visible map.
+ * Robot telemetry, localization and control state.
+ *
+ * Pose lives in its own top-level field: it updates at ~10 Hz while the
+ * rest changes at ~1 Hz, and Zustand selectors keep pose-only consumers
+ * (the map canvas) from re-rendering on battery changes and vice versa.
  */
-const DEFAULT_POSE: RobotPose = {
-  x: 0,
-  y: 0,
-  yaw: 0,
+const TELEMETRY_DEFAULTS = {
+  pose: null,
+  localization: NOT_LOCALIZED,
+  odometry: "",
+  battery: null,
+  imu: null,
+  lite3: null,
+  control: DEFAULT_CONTROL,
 };
 
-/**
- * Global robot runtime state store.
- *
- * State and pose are kept as separate top-level fields rather than nesting
- * pose inside state. Reasoning:
- *   - pose updates at ~10Hz (every /odom message)
- *   - state updates at ~1Hz (battery, temps, system metrics)
- *
- * Putting them together would force any pose-only consumer (e.g. the map
- * canvas) to re-render on battery percentage changes. With separate fields,
- * Zustand's selector-based subscription handles them independently.
- */
 export const useRobotStore = create<RobotStore>((set) => ({
-  state: DEFAULT_STATE,
-  pose: DEFAULT_POSE,
-
-  fsmState: "IDLE",
   connectionStatus: "disconnected",
-
-  isEstop: false,
-
-  setState: (state) =>
-    set((prev) => ({
-      state: {
-        ...prev.state,
-        ...state,
-      },
-    })),
-
-  setPose: (pose) => set({ pose }),
-
-  setFSM: (fsmState) => set({ fsmState }),
+  rosEpoch: 0,
+  ...TELEMETRY_DEFAULTS,
 
   setConnection: (connectionStatus) => set({ connectionStatus }),
-
-  toggleEstop: () =>
-    set((prev) => {
-      const next = !prev.isEstop;
-
-      return {
-        isEstop: next,
-        fsmState: next ? "ESTOP" : "IDLE",
-      };
-    }),
+  bumpRosEpoch: () => set((prev) => ({ rosEpoch: prev.rosEpoch + 1 })),
+  setPose: (pose) => set({ pose }),
+  setLocalization: (localization) => set({ localization }),
+  setOdometry: (odometry) => set({ odometry }),
+  setBattery: (battery) => set({ battery }),
+  setImu: (imu) => set({ imu }),
+  setLite3: (lite3) => set({ lite3 }),
+  setControl: (patch) =>
+    set((prev) => ({ control: { ...prev.control, ...patch } })),
+  resetTelemetry: () => set(TELEMETRY_DEFAULTS),
 }));

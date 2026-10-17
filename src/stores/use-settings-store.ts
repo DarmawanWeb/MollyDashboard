@@ -1,57 +1,53 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import type { Language } from "@/types";
 
 /* ----------------------------------------------------------------------------
  * Schema
  * ------------------------------------------------------------------------- */
 
-export type LlmProvider = "anthropic" | "openai" | "gemini" | "local";
-
-export type Nav2Planner = "NavFn" | "Smac2d" | "SmacHybrid" | "ThetaStar";
-export type Nav2Controller = "DWB" | "RPP" | "Graceful";
-
-export interface Nav2Params {
-  maxVelLin: number;
-  maxVelAng: number;
-  minObstacleDist: number;
-  goalTolerance: number;
-  planner: Nav2Planner;
-  controller: Nav2Controller;
-}
-
-export interface StreamConfig {
-  resolution: string;
-  fps: number;
-}
-
 export interface ConnectionConfig {
+  /** rosbridge WebSocket URL; empty: NEXT_PUBLIC_ROSBRIDGE_URL */
   rosbridgeUrl: string;
+  /** web_video_server base URL; empty: NEXT_PUBLIC_VIDEO_SERVER_URL */
   videoServerUrl: string;
+  /** Namespace of the robot driver topics and services */
+  robotNamespace: string;
+}
+
+export interface VideoConfig {
+  /** JPEG quality 1..100 */
+  quality: number;
+  /** Frame width in pixels */
+  width: number;
 }
 
 export interface TeleopConfig {
+  /** m/s forward / backward */
   linearVel: number;
+  /** m/s sideways */
+  lateralVel: number;
+  /** rad/s */
   angularVel: number;
 }
 
-export interface LlmConfig {
-  provider: LlmProvider;
-  apiKey: string;
-  model: string;
+export interface InteractionConfig {
+  /** Default speech / conversation language */
+  language: Language;
+  /** One-tap phrases on the interaction panel */
+  quickPhrases: string[];
 }
 
 interface SettingsState {
   connection: ConnectionConfig;
-  stream: StreamConfig;
+  video: VideoConfig;
   teleop: TeleopConfig;
-  nav2: Nav2Params;
-  llm: LlmConfig;
+  interaction: InteractionConfig;
 
   setConnection: (patch: Partial<ConnectionConfig>) => void;
-  setStream: (patch: Partial<StreamConfig>) => void;
+  setVideo: (patch: Partial<VideoConfig>) => void;
   setTeleop: (patch: Partial<TeleopConfig>) => void;
-  setNav2: (patch: Partial<Nav2Params>) => void;
-  setLlm: (patch: Partial<LlmConfig>) => void;
+  setInteraction: (patch: Partial<InteractionConfig>) => void;
   reset: () => void;
 }
 
@@ -61,31 +57,57 @@ interface SettingsState {
 
 const DEFAULTS = {
   connection: {
-    rosbridgeUrl: "ws://192.168.1.120:9090",
-    videoServerUrl: "http://192.168.1.120:8080",
+    rosbridgeUrl: "",
+    videoServerUrl: "",
+    robotNamespace: "robot",
   },
-  stream: {
-    resolution: "640x480",
-    fps: 30,
+  video: {
+    quality: 60,
+    width: 960,
   },
   teleop: {
     linearVel: 0.3,
-    angularVel: 0.5,
+    lateralVel: 0.2,
+    angularVel: 0.6,
   },
-  nav2: {
-    maxVelLin: 0.5,
-    maxVelAng: 1.0,
-    minObstacleDist: 0.25,
-    goalTolerance: 0.1,
-    planner: "NavFn" as Nav2Planner,
-    controller: "DWB" as Nav2Controller,
+  interaction: {
+    language: "id" as Language,
+    quickPhrases: [
+      "Selamat datang! Saya Molly, pemandu Anda hari ini.",
+      "Silakan ikuti saya.",
+      "Mohon beri jalan, terima kasih.",
+      "Terima kasih atas kunjungan Anda!",
+      "Welcome! I am Molly, your guide today.",
+    ],
   },
-  llm: {
-    provider: "anthropic" as LlmProvider,
-    apiKey: "",
-    model: "claude-sonnet-4-20250514",
-  },
-} as const;
+} as const satisfies Pick<
+  SettingsState,
+  "connection" | "video" | "teleop" | "interaction"
+>;
+
+type PersistedSettings = Pick<
+  SettingsState,
+  "connection" | "video" | "teleop" | "interaction"
+>;
+
+/** Bring settings saved by an older dashboard version to the current schema. */
+function migrate(persisted: unknown, version: number): PersistedSettings {
+  const base: PersistedSettings = structuredClone(DEFAULTS);
+  if (version >= 2 || typeof persisted !== "object" || persisted === null) {
+    return { ...base, ...(persisted as Partial<PersistedSettings>) };
+  }
+  // v1 kept connection URLs (with a hard-coded default robot address), stream,
+  // teleop, nav2 and LLM sections; only the URLs the operator typed survive.
+  const v1 = persisted as { connection?: Partial<ConnectionConfig> };
+  return {
+    ...base,
+    connection: {
+      ...base.connection,
+      rosbridgeUrl: v1.connection?.rosbridgeUrl ?? "",
+      videoServerUrl: v1.connection?.videoServerUrl ?? "",
+    },
+  };
+}
 
 /* ----------------------------------------------------------------------------
  * Store
@@ -94,29 +116,35 @@ const DEFAULTS = {
 /**
  * User-configurable dashboard settings, persisted to localStorage.
  *
- * Why persisted: operators don't want to retype rosbridge URL or LLM key
- * every page refresh. Note that storing api keys in localStorage is
- * tradition over hygiene — fine for an internal robotics dashboard, not
- * for a public product.
+ * Empty connection URLs fall back to the NEXT_PUBLIC_* defaults at the
+ * point of use (ConnectionProvider, camera feed), so a build configured for
+ * one robot keeps working until the operator overrides it.
  */
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      ...DEFAULTS,
+      ...structuredClone(DEFAULTS),
 
       setConnection: (patch) =>
         set((s) => ({ connection: { ...s.connection, ...patch } })),
-      setStream: (patch) => set((s) => ({ stream: { ...s.stream, ...patch } })),
+      setVideo: (patch) => set((s) => ({ video: { ...s.video, ...patch } })),
       setTeleop: (patch) => set((s) => ({ teleop: { ...s.teleop, ...patch } })),
-      setNav2: (patch) => set((s) => ({ nav2: { ...s.nav2, ...patch } })),
-      setLlm: (patch) => set((s) => ({ llm: { ...s.llm, ...patch } })),
+      setInteraction: (patch) =>
+        set((s) => ({ interaction: { ...s.interaction, ...patch } })),
 
-      reset: () => set(DEFAULTS),
+      reset: () => set(structuredClone(DEFAULTS)),
     }),
     {
       name: "molly-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      migrate,
+      partialize: (s): PersistedSettings => ({
+        connection: s.connection,
+        video: s.video,
+        teleop: s.teleop,
+        interaction: s.interaction,
+      }),
     },
   ),
 );

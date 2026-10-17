@@ -6,9 +6,29 @@ import type {
   TourStateSnapshot,
 } from "@/types/ui/tour";
 
+/** A stop of the mock tour. */
+export interface MockTourStop {
+  id: string;
+  name: string;
+  /** a gesture is performed on arrival */
+  gesture: boolean;
+}
+
+/** What a START command resolves to (from the mock robot's site). */
+export interface MockTourPlan {
+  tourId: string;
+  tourName: string;
+  stops: MockTourStop[];
+  returnTo: MockTourStop | null;
+}
+
+export type MockTourResolver = (
+  cmd: Extract<TourCommand, { kind: "START" }>,
+) => MockTourPlan | null;
+
 interface RunnerState {
   state: TourState;
-  poiIds: string[];
+  plan: MockTourPlan | null;
   currentPoiIndex: number;
   activity: TourActivity;
   errorReason?: string;
@@ -24,31 +44,39 @@ export interface MockTourRunner {
 }
 
 const ACTIVITY_DURATIONS: Record<Exclude<TourActivity, "">, number> = {
-  navigating: 2000,
-  narrating: 3000,
-  performing_motion: 1000,
+  navigating: 4000,
+  waiting_visitors: 2000,
+  performing_motion: 1500,
+  narrating: 3500,
+  dwelling: 1500,
+  returning: 4000,
 };
 
-const ACTIVITY_SEQUENCE: ReadonlyArray<Exclude<TourActivity, "">> = [
-  "navigating",
-  "narrating",
-  "performing_motion",
-];
+/** Per stop: walk, gesture (when the POI has one), narrate, dwell. */
+function stopSequence(stop: MockTourStop): Exclude<TourActivity, "">[] {
+  return stop.gesture
+    ? ["navigating", "performing_motion", "narrating", "dwelling"]
+    : ["navigating", "narrating", "dwelling"];
+}
 
 const STARTING_LATENCY_MS = 300;
 const STOPPING_LATENCY_MS = 300;
 
+const IDLE: RunnerState = {
+  state: "IDLE",
+  plan: null,
+  currentPoiIndex: -1,
+  activity: "",
+};
+
 /**
- * Create a mock tour FSM. Caller is responsible for calling `shutdown()`
- * when done (typically on component unmount).
+ * Create a mock tour FSM with the robot's activities. Caller is responsible
+ * for calling `shutdown()` when done (typically on component unmount).
  */
-export function createMockTourRunner(): MockTourRunner {
-  let state: RunnerState = {
-    state: "IDLE",
-    poiIds: [],
-    currentPoiIndex: -1,
-    activity: "",
-  };
+export function createMockTourRunner(
+  resolve: MockTourResolver,
+): MockTourRunner {
+  let state: RunnerState = { ...IDLE };
 
   const subscribers = new Set<(s: TourStateSnapshot) => void>();
   let activityTimer: ReturnType<typeof setTimeout> | null = null;
@@ -65,15 +93,29 @@ export function createMockTourRunner(): MockTourRunner {
     }
   };
 
-  const snapshot = (): TourStateSnapshot => ({
-    state: state.state,
-    currentPoiIndex: state.currentPoiIndex,
-    totalPois: state.poiIds.length,
-    currentPoiId: state.poiIds[state.currentPoiIndex] ?? null,
-    activity: state.activity,
-    timestamp: Date.now(),
-    errorReason: state.errorReason,
-  });
+  const currentStop = (): MockTourStop | null => {
+    const plan = state.plan;
+    if (!plan) return null;
+    if (state.activity === "returning") return plan.returnTo;
+    return plan.stops[state.currentPoiIndex] ?? null;
+  };
+
+  const snapshot = (): TourStateSnapshot => {
+    const stop = currentStop();
+    return {
+      state: state.state,
+      tourId: state.plan?.tourId ?? "",
+      tourName: state.plan?.tourName ?? "",
+      currentPoiIndex: state.currentPoiIndex,
+      totalPois: state.plan?.stops.length ?? 0,
+      currentPoiId: stop?.id ?? null,
+      currentPoiName: stop?.name ?? "",
+      activity: state.activity,
+      message: stop ? `${state.activity || "idle"} · ${stop.name}` : "",
+      timestamp: Date.now(),
+      errorReason: state.errorReason,
+    };
+  };
 
   const emit = () => {
     const snap = snapshot();
@@ -87,56 +129,56 @@ export function createMockTourRunner(): MockTourRunner {
     }
   };
 
-  const scheduleNextActivity = () => {
-    if (state.state !== "RUNNING") return;
-    if (state.activity === "") {
-      // shouldn't happen if RUNNING, but be defensive
-      state.activity = "navigating";
+  const finish = () => {
+    state = { ...state, state: "STOPPING", activity: "" };
+    emit();
+    pendingTimer = setTimeout(() => {
+      pendingTimer = null;
+      state = { ...IDLE };
       emit();
-    }
+    }, STOPPING_LATENCY_MS);
+  };
 
-    const duration =
-      ACTIVITY_DURATIONS[state.activity as Exclude<TourActivity, "">] ?? 2000;
+  const beginStop = (index: number) => {
+    const plan = state.plan;
+    if (!plan) return;
+    if (index >= plan.stops.length) {
+      if (plan.returnTo) {
+        state = { ...state, activity: "returning" };
+        emit();
+        activityTimer = setTimeout(() => {
+          activityTimer = null;
+          if (state.state === "RUNNING") finish();
+        }, ACTIVITY_DURATIONS.returning);
+        return;
+      }
+      finish();
+      return;
+    }
+    state = { ...state, currentPoiIndex: index, activity: "navigating" };
+    emit();
+    scheduleNextActivity();
+  };
+
+  const scheduleNextActivity = () => {
+    if (state.state !== "RUNNING" || state.activity === "") return;
+    const stop = state.plan?.stops[state.currentPoiIndex];
+    if (!stop) return;
+    const activity = state.activity as Exclude<TourActivity, "">;
 
     activityTimer = setTimeout(() => {
       activityTimer = null;
       if (state.state !== "RUNNING") return;
-
-      const idx = ACTIVITY_SEQUENCE.indexOf(
-        state.activity as Exclude<TourActivity, "">,
-      );
-      const next = ACTIVITY_SEQUENCE[idx + 1];
-
+      const sequence = stopSequence(stop);
+      const next = sequence[sequence.indexOf(activity) + 1];
       if (next) {
-        state.activity = next;
+        state = { ...state, activity: next };
         emit();
         scheduleNextActivity();
         return;
       }
-
-      // Completed full cycle on current POI — advance to next or finish.
-      if (state.currentPoiIndex + 1 < state.poiIds.length) {
-        state.currentPoiIndex += 1;
-        state.activity = "navigating";
-        emit();
-        scheduleNextActivity();
-      } else {
-        // tour complete — auto-stop
-        state.state = "STOPPING";
-        state.activity = "";
-        emit();
-        pendingTimer = setTimeout(() => {
-          pendingTimer = null;
-          state = {
-            state: "IDLE",
-            poiIds: [],
-            currentPoiIndex: -1,
-            activity: "",
-          };
-          emit();
-        }, STOPPING_LATENCY_MS);
-      }
-    }, duration);
+      beginStop(state.currentPoiIndex + 1);
+    }, ACTIVITY_DURATIONS[activity]);
   };
 
   const handleCommand = (cmd: TourCommand) => {
@@ -146,84 +188,60 @@ export function createMockTourRunner(): MockTourRunner {
       return;
     }
 
-    const optimistic = nextState(state.state, cmd.kind);
-    if (!optimistic) return; // already checked canTransition, but TS narrowing
-
     clearTimers();
 
     if (cmd.kind === "START") {
+      const plan = resolve(cmd);
+      if (!plan || plan.stops.length === 0) {
+        state = {
+          ...IDLE,
+          state: "ERROR",
+          errorReason: "Unknown tour or no POIs to visit",
+        };
+        emit();
+        return;
+      }
       state = {
-        state: "STARTING",
-        poiIds: cmd.poiIds,
+        state: nextState(state.state, "START") ?? "STARTING",
+        plan,
         currentPoiIndex: -1,
         activity: "",
       };
       emit();
       pendingTimer = setTimeout(() => {
         pendingTimer = null;
-        state.state = "RUNNING";
-        state.currentPoiIndex = 0;
-        state.activity = "navigating";
-        emit();
-        scheduleNextActivity();
+        state = { ...state, state: "RUNNING" };
+        beginStop(0);
       }, STARTING_LATENCY_MS);
       return;
     }
 
     if (cmd.kind === "STOP") {
-      state.state = "STOPPING";
-      state.activity = "";
-      emit();
-      pendingTimer = setTimeout(() => {
-        pendingTimer = null;
-        state = {
-          state: "IDLE",
-          poiIds: [],
-          currentPoiIndex: -1,
-          activity: "",
-        };
+      if (state.state === "ERROR") {
+        state = { ...IDLE };
         emit();
-      }, STOPPING_LATENCY_MS);
+        return;
+      }
+      finish();
       return;
     }
 
     if (cmd.kind === "PAUSE") {
-      state.state = "PAUSED";
       // keep activity so RESUME picks up smoothly
+      state = { ...state, state: "PAUSED" };
       emit();
       return;
     }
 
     if (cmd.kind === "RESUME") {
-      state.state = "RUNNING";
+      state = { ...state, state: "RUNNING" };
       emit();
       scheduleNextActivity();
       return;
     }
 
     if (cmd.kind === "SKIP") {
-      if (state.currentPoiIndex + 1 < state.poiIds.length) {
-        state.currentPoiIndex += 1;
-        state.activity = "navigating";
-        emit();
-        scheduleNextActivity();
-      } else {
-        // skip past end → finish tour
-        state.state = "STOPPING";
-        state.activity = "";
-        emit();
-        pendingTimer = setTimeout(() => {
-          pendingTimer = null;
-          state = {
-            state: "IDLE",
-            poiIds: [],
-            currentPoiIndex: -1,
-            activity: "",
-          };
-          emit();
-        }, STOPPING_LATENCY_MS);
-      }
-      return;
+      beginStop(state.currentPoiIndex + 1);
     }
   };
 

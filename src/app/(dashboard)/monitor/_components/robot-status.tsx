@@ -1,136 +1,148 @@
 "use client";
 
-import { Activity, Battery, Gauge, Thermometer } from "lucide-react";
-import { FSM_STATES } from "@/constants/fsm-states";
-import { cn } from "@/lib/utils";
+import {
+  Battery,
+  Footprints,
+  Gauge,
+  LocateFixed,
+  Radar,
+  Shield,
+  SlidersHorizontal,
+} from "lucide-react";
+import { ActivityBadge, Stat } from "@/components/robot";
 import { useRobotStore } from "@/stores/use-robot-store";
+import type { LocalizationSnapshot, ProtectiveField } from "@/types";
 
-function Stat({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  color: string;
-}) {
-  return (
-    <div className="panel-inset px-3 py-2.5">
-      <div className="flex items-center gap-1.5 mb-1">
-        <span aria-hidden className="text-txt-muted">
-          {icon}
-        </span>
-        <span
-          className="label"
-          id={`stat-${label.toLowerCase().replace(/\s+/g, "-")}`}
-        >
-          {label}
-        </span>
-      </div>
-      <span className={cn("font-mono text-base font-bold", color)}>
-        {value}
-      </span>
-    </div>
-  );
+const FIELD_TONE: Record<ProtectiveField, string> = {
+  clear: "text-green",
+  limited: "text-amber",
+  stop: "text-red",
+  stale: "text-red",
+  off: "text-txt-tertiary",
+  unknown: "text-txt-muted",
+};
+
+function localizationText(l: LocalizationSnapshot): string {
+  switch (l.source) {
+    case "tag":
+      return l.detail ? `tag ${l.detail}` : "tag";
+    case "pose_estimate":
+      return "pose estimate";
+    case "origin":
+      return "map origin";
+    case "none":
+      return "not localized";
+    default:
+      return l.raw || "unknown";
+  }
 }
 
+function meters(v: number | undefined): string {
+  return v === undefined || !Number.isFinite(v) ? "—" : `${v.toFixed(2)} m`;
+}
+
+/**
+ * Robot status: activity, battery, localization, control mux, Lite3 driver
+ * state and attitude. Values the robot has not reported show a dash.
+ */
 export function RobotStatus() {
-  const state = useRobotStore((s) => s.state);
-  const fsmState = useRobotStore((s) => s.fsmState);
+  const battery = useRobotStore((s) => s.battery);
+  const localization = useRobotStore((s) => s.localization);
+  const control = useRobotStore((s) => s.control);
+  const odometry = useRobotStore((s) => s.odometry);
+  const lite3 = useRobotStore((s) => s.lite3);
+  const imu = useRobotStore((s) => s.imu);
 
-  const fsm = FSM_STATES[fsmState];
-
-  const gaitModeStyle: Record<string, string> = {
-    STANDAR: "text-blue-400",
-    CRAWL: "text-orange-400",
-    "H-STEP": "text-pink-400",
-    STAIR: "text-purple-400",
-  };
-
-  const speedModeColor: Record<string, string> = {
-    LOW: "#22c55e",
-    MEDIUM: "#facc15",
-    FAST: "#ef4444",
-  };
+  const batteryPct = battery?.percentage;
 
   return (
     <div className="flex flex-col gap-2">
-      {/* 1. BATTERY + TEMP */}
-      <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
+      <ActivityBadge />
+
+      <div className="grid grid-cols-2 gap-1.5">
         <Stat
           icon={<Battery size={13} />}
           label="Battery"
-          value={`${state.battery_percentage}%`}
-          color={state.battery_percentage > 30 ? "#22c55e" : "#ef4444"}
-        />
-
-        <Stat
-          icon={<Thermometer size={13} />}
-          label="Temperature"
-          value={`${state.cpu_temp}°C`}
-          color={state.cpu_temp > 70 ? "#ef4444" : "#a0a0b0"}
-        />
-
-        <Stat
-          icon={<Activity size={13} />}
-          label="Speed Mode"
-          value={state.speed_mode}
-          color={speedModeColor[state.speed_mode]}
+          value={batteryPct === undefined ? "—" : `${batteryPct}%`}
+          tone={
+            batteryPct === undefined
+              ? "text-txt-muted"
+              : batteryPct > 30
+                ? "text-green"
+                : "text-red"
+          }
+          hint={
+            battery && Number.isFinite(battery.voltage)
+              ? `${battery.voltage.toFixed(1)} V`
+              : undefined
+          }
         />
         <Stat
-          icon={<Activity size={13} />}
-          label="Gait Mode"
-          value={state.gait_mode}
-          color={gaitModeStyle[state.gait_mode]}
+          icon={<LocateFixed size={13} />}
+          label="Localization"
+          value={localizationText(localization)}
+          tone={localization.localized ? "text-cyan" : "text-amber"}
+        />
+        <Stat
+          icon={<SlidersHorizontal size={13} />}
+          label="Mode"
+          value={control.mode.toUpperCase()}
+          tone={control.mode === "remote" ? "text-amber" : "text-txt-primary"}
+        />
+        <Stat
+          icon={<Shield size={13} />}
+          label="Field"
+          value={control.field}
+          tone={FIELD_TONE[control.field]}
         />
       </div>
 
-      {/* 4. SPEED */}
-      <div className="panel-inset px-3 py-2">
-        <div className="flex items-center gap-1.5 mb-1">
-          <Gauge size={13} aria-hidden className="text-txt-muted" />
-          <span className="label" id="stat-speed">
-            Speed
-          </span>
-        </div>
-
-        <div className="font-mono text-base font-bold text-cyan-300">
-          {state.velocity.linear.toFixed(2)} m/s
-        </div>
-      </div>
-
-      {/* 5. FSM */}
-      <div className="panel-inset px-3 py-2">
-        <div className="flex items-center gap-1.5 mb-2">
-          <Activity size={13} aria-hidden className="text-txt-muted" />
-          <span className="label" id="stat-fsm">
-            FSM State
-          </span>
-        </div>
-
-        <div
-          aria-live="polite"
-          className={cn(
-            "flex items-center gap-2 border px-2.5 py-1 w-full",
-            fsm.bgClass,
-            fsm.borderClass,
-          )}
-        >
-          <div
-            aria-hidden
-            className={cn(
-              "h-2 w-2 motion-safe:animate-pulse-dot",
-              fsm.dotClass,
-            )}
+      {lite3 && (
+        <div className="grid grid-cols-2 gap-1.5">
+          <Stat
+            icon={<Footprints size={13} />}
+            label="Posture"
+            value={
+              lite3.gesture ? `gesture ${lite3.gesture}` : lite3.basicState
+            }
+            tone={lite3.connected ? undefined : "text-red"}
+            hint={lite3.connected ? undefined : "no state from the motion host"}
           />
-          <span
-            className={cn("font-mono text-xs font-semibold", fsm.textClass)}
-          >
-            {fsm.label}
-          </span>
+          <Stat icon={<Gauge size={13} />} label="Gait" value={lite3.gait} />
+          <Stat
+            icon={<Radar size={13} />}
+            label="Sonar front"
+            value={meters(lite3.ultrasoundFront)}
+          />
+          <Stat
+            icon={<Radar size={13} />}
+            label="Sonar rear"
+            value={meters(lite3.ultrasoundRear)}
+          />
         </div>
+      )}
+
+      <div className="panel-inset px-3 py-2 flex items-center justify-between">
+        <span className="label">Attitude</span>
+        <span className="font-mono text-xs text-txt-secondary">
+          {imu ? `roll ${imu.roll}° · pitch ${imu.pitch}°` : "—"}
+        </span>
+      </div>
+
+      <div className="panel-inset px-3 py-2 flex items-center justify-between gap-2">
+        <span className="label">Odometry</span>
+        <span
+          className={`font-mono text-xs truncate ${
+            odometry.startsWith("ok")
+              ? "text-green"
+              : odometry
+                ? "text-amber"
+                : "text-txt-muted"
+          }`}
+          title={odometry}
+        >
+          {odometry || "—"}
+        </span>
       </div>
     </div>
   );

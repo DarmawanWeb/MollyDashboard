@@ -1,185 +1,160 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { MotionAction, OccupancyGrid, POI } from "@/types";
+import { useRobotAction } from "@/hooks/use-robot-action";
+import { useRobotApi } from "@/hooks/use-robot-api";
+import type { POI } from "@/types";
 
-export interface POIForm {
-  name: string;
-  description: string;
-  dwellTimeSec: number;
-  narrationText: string;
-  motionAction: MotionAction;
-}
+type PlacementTarget = "new" | "move";
 
-const DEFAULT_FORM: POIForm = {
+const NEW_POI: POI = {
+  id: "",
   name: "",
   description: "",
-  dwellTimeSec: 30,
-  narrationText: "",
-  motionAction: "none",
+  x: 0,
+  y: 0,
+  yaw: 0,
+  narration: "",
+  language: "",
+  gesture: "",
+  dwellSec: 5,
 };
 
-interface PendingCoord {
-  x: number;
-  y: number;
-}
-
 export interface UsePoiEditorResult {
-  // state
-  pois: POI[];
   selectedId: string | null;
-  editingId: string | null;
-  pendingCoord: PendingCoord | null;
-  addMode: boolean;
-  form: POIForm;
-  /** True when the form panel should be visible */
-  isFormOpen: boolean;
+  /** POI in the form (new: empty id), null when the form is closed */
+  draft: POI | null;
+  /** The new POI takes the robot's pose when saved */
+  atRobotPose: boolean;
+  /** Waiting for a map click (+ drag for the heading) */
+  placing: boolean;
+  saving: boolean;
 
-  // setters
-  setForm: (next: POIForm | ((prev: POIForm) => POIForm)) => void;
-
-  // actions
   startAdd: () => void;
-  cancelAdd: () => void;
-  /** Called when user clicks the map in add mode. world is in meters. */
-  placeAt: (world: { x: number; y: number }, grid: OccupancyGrid) => void;
-  selectPoi: (id: string | null) => void;
+  startAddAtRobot: () => void;
+  /** Re-place the POI in the form on the map */
+  startMove: () => void;
+  cancelPlacement: () => void;
+  /** Called by the map canvas in placement mode */
+  place: (pose: { x: number; y: number; yaw: number }) => void;
+  edit: (poi: POI) => void;
+  update: (patch: Partial<POI>) => void;
+  save: () => Promise<void>;
+  cancel: () => void;
+  remove: (poi: POI) => Promise<void>;
   toggleSelect: (id: string) => void;
-  editPoi: (poi: POI) => void;
-  saveForm: () => void;
-  cancelForm: () => void;
-  deletePoi: (id: string) => void;
 }
 
 /**
- * Consolidated POI editing state for the mapping page.
- *
- * Owns four pieces of state that previously lived inline:
- *   - pois            (the list)
- *   - selectedId      (highlight on map + list)
- *   - editingId       (which POI is being edited)
- *   - pendingCoord    (where a new POI will be placed)
- *   - addMode         (waiting for map click)
- *   - form            (form field values)
- *
- * The form is open when there's a pending coord OR an active editing id.
+ * POI editing state for the mapping page. POIs live on the robot: saving and
+ * deleting go through /site/save_poi and /site/delete_poi, and the list the
+ * page shows is the robot's /site/pois.
  */
 export function usePoiEditor(): UsePoiEditorResult {
-  const [pois, setPois] = useState<POI[]>([]);
+  const api = useRobotApi();
+  const { run, busy } = useRobotAction();
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [pendingCoord, setPendingCoord] = useState<PendingCoord | null>(null);
-  const [addMode, setAddMode] = useState(false);
-  const [form, setForm] = useState<POIForm>(DEFAULT_FORM);
+  const [draft, setDraft] = useState<POI | null>(null);
+  const [atRobotPose, setAtRobotPose] = useState(false);
+  const [placing, setPlacing] = useState<PlacementTarget | null>(null);
 
   const startAdd = useCallback(() => {
-    setAddMode(true);
-    setEditingId(null);
-    setPendingCoord(null);
-    setForm(DEFAULT_FORM);
+    setDraft(null);
+    setAtRobotPose(false);
+    setPlacing("new");
   }, []);
 
-  const cancelAdd = useCallback(() => {
-    setAddMode(false);
+  const startAddAtRobot = useCallback(() => {
+    setPlacing(null);
+    setAtRobotPose(true);
+    setDraft({ ...NEW_POI });
   }, []);
 
-  const placeAt = useCallback(
-    (world: { x: number; y: number }, grid: OccupancyGrid) => {
-      const { resolution, origin } = grid.info;
-      const cell = {
-        x: Math.floor((world.x - origin.position.x) / resolution),
-        y: Math.floor((world.y - origin.position.y) / resolution),
-      };
-      setPendingCoord(cell);
-      setAddMode(false);
+  const startMove = useCallback(() => {
+    setAtRobotPose(false);
+    setPlacing("move");
+  }, []);
+
+  const cancelPlacement = useCallback(() => setPlacing(null), []);
+
+  const place = useCallback(
+    (pose: { x: number; y: number; yaw: number }) => {
+      setDraft((prev) =>
+        placing === "move" && prev
+          ? { ...prev, ...pose }
+          : { ...NEW_POI, ...pose },
+      );
+      setPlacing(null);
     },
-    [],
+    [placing],
   );
 
-  const selectPoi = useCallback((id: string | null) => {
-    setSelectedId(id);
+  const edit = useCallback((poi: POI) => {
+    setPlacing(null);
+    setAtRobotPose(false);
+    setSelectedId(poi.id);
+    setDraft({ ...poi });
   }, []);
+
+  const update = useCallback((patch: Partial<POI>) => {
+    setDraft((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
+  const save = useCallback(async () => {
+    if (!draft || !draft.name.trim()) return;
+    const res = await run(
+      "save",
+      draft.id ? `Update ${draft.name}` : `Add ${draft.name}`,
+      () => api.savePoi(draft, atRobotPose),
+      { successToast: true },
+    );
+    if (res?.success) {
+      setSelectedId(res.poi?.id ?? draft.id ?? null);
+      setDraft(null);
+      setAtRobotPose(false);
+    }
+  }, [api, run, draft, atRobotPose]);
+
+  const cancel = useCallback(() => {
+    setDraft(null);
+    setPlacing(null);
+    setAtRobotPose(false);
+  }, []);
+
+  const remove = useCallback(
+    async (poi: POI) => {
+      const res = await run("delete", `Delete ${poi.name}`, () =>
+        api.deletePoi(poi.id),
+      );
+      if (res?.success) {
+        setSelectedId((id) => (id === poi.id ? null : id));
+        setDraft((d) => (d?.id === poi.id ? null : d));
+      }
+    },
+    [api, run],
+  );
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedId((curr) => (curr === id ? null : id));
   }, []);
 
-  const editPoi = useCallback((poi: POI) => {
-    setEditingId(poi.id);
-    setPendingCoord(null);
-    setAddMode(false);
-    setForm({
-      name: poi.name,
-      description: poi.description,
-      dwellTimeSec: poi.dwellTimeSec,
-      narrationText: poi.narrationText ?? "",
-      motionAction: poi.motionAction ?? "none",
-    });
-  }, []);
-
-  const saveForm = useCallback(() => {
-    if (!form.name.trim()) return;
-
-    if (editingId) {
-      setPois((prev) =>
-        prev.map((p) =>
-          p.id === editingId
-            ? { ...p, ...form, dwellTimeSec: Number(form.dwellTimeSec) }
-            : p,
-        ),
-      );
-      setEditingId(null);
-    } else if (pendingCoord) {
-      const poi: POI = {
-        id: crypto.randomUUID(),
-        ...form,
-        dwellTimeSec: Number(form.dwellTimeSec),
-        x: pendingCoord.x,
-        y: pendingCoord.y,
-        orderIndex: pois.length,
-        mapId: "current",
-      };
-      setPois((prev) => [...prev, poi]);
-      setPendingCoord(null);
-    }
-    setForm(DEFAULT_FORM);
-  }, [form, editingId, pendingCoord, pois.length]);
-
-  const cancelForm = useCallback(() => {
-    setPendingCoord(null);
-    setEditingId(null);
-    setForm(DEFAULT_FORM);
-  }, []);
-
-  const deletePoi = useCallback(
-    (id: string) => {
-      setPois((prev) => prev.filter((p) => p.id !== id));
-      if (selectedId === id) setSelectedId(null);
-      if (editingId === id) {
-        setEditingId(null);
-        setForm(DEFAULT_FORM);
-      }
-    },
-    [selectedId, editingId],
-  );
-
   return {
-    pois,
     selectedId,
-    editingId,
-    pendingCoord,
-    addMode,
-    form,
-    isFormOpen: !!pendingCoord || !!editingId,
-    setForm,
+    draft,
+    atRobotPose,
+    placing: placing !== null,
+    saving: busy === "save",
     startAdd,
-    cancelAdd,
-    placeAt,
-    selectPoi,
+    startAddAtRobot,
+    startMove,
+    cancelPlacement,
+    place,
+    edit,
+    update,
+    save,
+    cancel,
+    remove,
     toggleSelect,
-    editPoi,
-    saveForm,
-    cancelForm,
-    deletePoi,
   };
 }

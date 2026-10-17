@@ -95,22 +95,3 @@ export function unproject(
     gy,
   };
 }
-
-/**
- * Project a POI's grid-cell coords to canvas pixels.
- * POI x/y are stored as grid cells in the UI domain, not world meters.
- */
-export function projectPoiCell(
-  cellX: number,
-  cellY: number,
-  grid: OccupancyGrid,
-  view: Viewport,
-  canvasW: number,
-  canvasH: number,
-): [number, number] {
-  const { resolution } = grid.info;
-  const origin = gridOrigin(grid);
-  const wx = cellX * resolution + origin.x;
-  const wy = cellY * resolution + origin.y;
-  return project(wx, wy, grid, view, canvasW, canvasH);
-}

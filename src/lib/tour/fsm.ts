@@ -116,11 +116,12 @@ export function stateLabel(state: TourState): string {
  * Useful guard before serializing to the wire.
  */
 export function validateCommand(cmd: TourCommand): TourCommand {
-  if (cmd.kind === "START" && !Array.isArray(cmd.poiIds)) {
-    throw new Error("START command requires poiIds array");
+  if (cmd.kind !== "START") return cmd;
+  if (!cmd.tourId && !Array.isArray(cmd.poiIds)) {
+    throw new Error("START command requires a tourId or a poiIds array");
   }
-  if (cmd.kind === "START" && cmd.poiIds.length === 0) {
-    throw new Error("START command requires non-empty poiIds");
+  if (!cmd.tourId && cmd.poiIds.length === 0) {
+    throw new Error("START command requires a tour or at least one POI");
   }
   return cmd;
 }
