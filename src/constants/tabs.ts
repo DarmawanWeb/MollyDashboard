@@ -1,10 +1,15 @@
-import { Eye, Map as MapIcon, Monitor, Settings } from "lucide-react";
+import { Eye, Gamepad2, Map as MapIcon, Monitor, Settings } from "lucide-react";
 
 export const TABS = [
   {
     href: "/monitor",
     label: "Monitor",
     icon: Eye,
+  },
+  {
+    href: "/control",
+    label: "Control",
+    icon: Gamepad2,
   },
   {
     href: "/mapping",
