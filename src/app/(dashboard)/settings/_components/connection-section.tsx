@@ -1,9 +1,9 @@
 "use client";
 
 import { Radio, Save } from "lucide-react";
-import { useState } from "react";
 import { toast } from "@/components/feedback";
 import { MollyButton, MollyField, MollyInput } from "@/components/ui/molly";
+import { useDraft } from "@/hooks/use-draft";
 import { env } from "@/lib/env";
 import { isValidNamespace, normalizeNamespace } from "@/lib/ros";
 import { useSettingsStore } from "@/stores/use-settings-store";
@@ -21,29 +21,28 @@ export function ConnectionSection() {
   const connection = useSettingsStore((s) => s.connection);
   const setConnection = useSettingsStore((s) => s.setConnection);
 
-  // Local draft so the user can edit without immediately tearing down the
-  // websocket connection. Commit on "Save & reconnect".
-  const [draftRos, setDraftRos] = useState(connection.rosbridgeUrl);
-  const [draftVideo, setDraftVideo] = useState(connection.videoServerUrl);
-  const [draftNs, setDraftNs] = useState(connection.robotNamespace);
+  // Drafts so the operator can edit without tearing down the websocket on
+  // every keystroke. Committed on "Save & reconnect".
+  const ros = useDraft(connection.rosbridgeUrl);
+  const video = useDraft(connection.videoServerUrl);
+  const ns = useDraft(connection.robotNamespace);
 
-  const nsValid = isValidNamespace(draftNs);
-  const valid = isWs(draftRos.trim()) && isHttp(draftVideo.trim()) && nsValid;
-  const isDirty =
-    draftRos !== connection.rosbridgeUrl ||
-    draftVideo !== connection.videoServerUrl ||
-    draftNs !== connection.robotNamespace;
+  const nsValid = isValidNamespace(ns.value);
+  const valid = isWs(ros.value.trim()) && isHttp(video.value.trim()) && nsValid;
+  const isDirty = ros.dirty || video.dirty || ns.dirty;
 
   const handleSave = () => {
-    const robotNamespace = normalizeNamespace(draftNs);
+    const rosbridgeUrl = ros.value.trim();
     setConnection({
-      rosbridgeUrl: draftRos.trim(),
-      videoServerUrl: draftVideo.trim(),
-      robotNamespace,
+      rosbridgeUrl,
+      videoServerUrl: video.value.trim(),
+      robotNamespace: normalizeNamespace(ns.value),
     });
-    setDraftNs(robotNamespace);
+    ros.reset();
+    video.reset();
+    ns.reset();
     // ConnectionProvider rebuilds the client with the new settings
-    toast.info("Reconnecting…", draftRos.trim() || env.ROSBRIDGE_URL);
+    toast.info("Reconnecting…", rosbridgeUrl || env.ROSBRIDGE_URL);
   };
 
   return (
@@ -54,17 +53,17 @@ export function ConnectionSection() {
           htmlFor="rosbridge-url"
           hint={`Empty: ${env.ROSBRIDGE_URL}`}
           error={
-            isWs(draftRos.trim())
+            isWs(ros.value.trim())
               ? undefined
               : "Must start with ws:// or wss://"
           }
         >
           <MollyInput
             id="rosbridge-url"
-            value={draftRos}
-            onChange={(e) => setDraftRos(e.target.value)}
+            value={ros.value}
+            onChange={(e) => ros.set(e.target.value)}
             placeholder={env.ROSBRIDGE_URL}
-            invalid={!isWs(draftRos.trim())}
+            invalid={!isWs(ros.value.trim())}
           />
         </MollyField>
 
@@ -73,17 +72,17 @@ export function ConnectionSection() {
           htmlFor="video-url"
           hint={`Empty: ${env.VIDEO_SERVER_URL}`}
           error={
-            isHttp(draftVideo.trim())
+            isHttp(video.value.trim())
               ? undefined
               : "Must start with http:// or https://"
           }
         >
           <MollyInput
             id="video-url"
-            value={draftVideo}
-            onChange={(e) => setDraftVideo(e.target.value)}
+            value={video.value}
+            onChange={(e) => video.set(e.target.value)}
             placeholder={env.VIDEO_SERVER_URL}
-            invalid={!isHttp(draftVideo.trim())}
+            invalid={!isHttp(video.value.trim())}
           />
         </MollyField>
 
@@ -95,8 +94,8 @@ export function ConnectionSection() {
         >
           <MollyInput
             id="robot-ns"
-            value={draftNs}
-            onChange={(e) => setDraftNs(e.target.value)}
+            value={ns.value}
+            onChange={(e) => ns.set(e.target.value)}
             placeholder="robot"
             invalid={!nsValid}
           />
