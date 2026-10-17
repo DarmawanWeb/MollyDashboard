@@ -1,7 +1,8 @@
 "use client";
 
 import { Bot } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ActivityBadge } from "@/components/robot";
 import { TABS } from "@/constants/tabs";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,6 @@ import { EstopButton } from "./estop-button";
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
 
   return (
     <header className="h-13 shrink-0 border-b border-border-subtle bg-mol-primary px-5">
@@ -36,16 +36,16 @@ export function Header() {
         </div>
 
         {/* Tabs */}
-        <nav className="flex gap-0.5">
+        <nav aria-label="Dashboard pages" className="flex gap-0.5">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = pathname === tab.href;
 
             return (
-              <button
+              <Link
                 key={tab.href}
-                type="button"
-                onClick={() => router.push(tab.href)}
+                href={tab.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-1.5 border px-3.5 py-1.5 font-mono text-xs transition-colors",
                   active
@@ -55,7 +55,7 @@ export function Header() {
               >
                 <Icon size={13} />
                 {tab.label}
-              </button>
+              </Link>
             );
           })}
         </nav>
