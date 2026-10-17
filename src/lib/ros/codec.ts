@@ -89,6 +89,16 @@ export function makeTwist2D(linearX: number, angularZ: number): Twist {
   };
 }
 
+/**
+ * Construct a body-frame Twist for a holonomic robot (legged: x, y and yaw).
+ */
+export function makeTwist(vx: number, vy: number, wz: number): Twist {
+  return {
+    linear: { ...ZERO_VEC, x: vx, y: vy },
+    angular: { ...ZERO_VEC, z: wz },
+  };
+}
+
 export const STOP_TWIST: Readonly<Twist> = Object.freeze({
   linear: { ...ZERO_VEC },
   angular: { ...ZERO_VEC },

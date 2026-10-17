@@ -18,14 +18,26 @@ let currentConfig: ClientConfig | null = null;
 /**
  * Initialize or reconfigure the singleton client.
  *
- * Calling this with a different URL than the current one will tear down the
- * existing instance and create a new one. Subscribers must re-subscribe.
+ * Calling this with a different URL or robot namespace than the current one
+ * tears down the existing instance and creates a new one. Subscribers must
+ * re-subscribe (the sync hooks do, keyed on the client instance).
  */
 export function configureRos(config: Partial<ClientConfig> = {}): RosClient {
-  const url = config.url ?? currentConfig?.url ?? env.ROSBRIDGE_URL;
-  const next: ClientConfig = { ...currentConfig, ...config, url };
+  const url = config.url || currentConfig?.url || env.ROSBRIDGE_URL;
+  const robotNamespace =
+    config.robotNamespace || currentConfig?.robotNamespace || undefined;
+  const next: ClientConfig = {
+    ...currentConfig,
+    ...config,
+    url,
+    robotNamespace,
+  };
 
-  if (instance && currentConfig?.url === url) {
+  if (
+    instance &&
+    currentConfig?.url === url &&
+    currentConfig?.robotNamespace === robotNamespace
+  ) {
     return instance;
   }
 

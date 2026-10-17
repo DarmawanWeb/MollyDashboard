@@ -17,6 +17,7 @@ import type {
   UnsubscribeMsg,
 } from "@/types/ros/rosbridge";
 import type { ConnectionStatus } from "@/types/ui/connection";
+import { DEFAULT_ROBOT_NAMESPACE, resolveName } from "./names";
 import type { ServiceDef, TopicDef } from "./topics";
 import { RosTransport, type TransportConfig } from "./transport";
 
@@ -38,6 +39,8 @@ interface PendingCall {
 export interface ClientConfig extends TransportConfig {
   /** Default service call timeout in ms. Default 10000. */
   serviceTimeoutMs?: number;
+  /** Namespace of the robot driver, replaces `{robot}` in names. Default "robot". */
+  robotNamespace?: string;
 }
 
 export class RosClient {
@@ -46,10 +49,12 @@ export class RosClient {
   private readonly pending = new Map<string, PendingCall>();
   private callCounter = 0;
   private readonly serviceTimeoutMs: number;
+  private readonly robotNamespace: string;
 
   constructor(config: ClientConfig) {
     this.transport = new RosTransport(config);
     this.serviceTimeoutMs = config.serviceTimeoutMs ?? 10_000;
+    this.robotNamespace = config.robotNamespace ?? DEFAULT_ROBOT_NAMESPACE;
 
     this.transport.onMessage((msg) => this.handleIncoming(msg));
     this.transport.onStatus((s) => {
@@ -84,6 +89,11 @@ export class RosClient {
     return this.transport.getStatus();
   }
 
+  /** Resolve a registry name (`{robot}` placeholder) to the ROS name. */
+  resolve(name: string): string {
+    return resolveName(name, this.robotNamespace);
+  }
+
   /* ------------------------------------------------------------------------
    * Typed subscribe (preferred — uses TopicDef from registry)
    * --------------------------------------------------------------------- */
@@ -106,12 +116,13 @@ export class RosClient {
    * Prefer `subscribe` with a `TopicDef`.
    */
   subscribeRaw(
-    topic: string,
+    name: string,
     type: string,
     handler: UnknownHandler,
     options?: { throttleMs?: number },
   ): () => void {
     const throttle_rate = options?.throttleMs ?? 100;
+    const topic = this.resolve(name);
     const existing = this.subs.get(topic);
 
     if (existing) {
@@ -150,7 +161,12 @@ export class RosClient {
   }
 
   publishRaw<T>(topic: string, type: string, msg: T): boolean {
-    const payload: PublishMsg<T> = { op: "publish", topic, type, msg };
+    const payload: PublishMsg<T> = {
+      op: "publish",
+      topic: this.resolve(topic),
+      type,
+      msg,
+    };
     return this.transport.send(payload);
   }
 
@@ -183,10 +199,11 @@ export class RosClient {
         return;
       }
 
+      const name = this.resolve(service);
       const id = `srv_${++this.callCounter}_${Date.now()}`;
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`Service call timeout: ${service}`));
+        reject(new Error(`Service call timeout: ${name}`));
       }, timeoutMs ?? this.serviceTimeoutMs);
 
       this.pending.set(id, {
@@ -198,7 +215,7 @@ export class RosClient {
       const payload: CallServiceMsg<unknown> = {
         op: "call_service",
         id,
-        service,
+        service: name,
         type,
         args,
       };
@@ -243,7 +260,10 @@ export class RosClient {
       if (msg.result) {
         pending.resolve(msg.values);
       } else {
-        pending.reject(new Error(`Service call failed: ${msg.service}`));
+        const detail = typeof msg.values === "string" ? `: ${msg.values}` : "";
+        pending.reject(
+          new Error(`Service call failed: ${msg.service}${detail}`),
+        );
       }
       return;
     }

@@ -21,6 +21,7 @@ export { type ClientConfig, RosClient } from "./client";
 export {
   degreesToRadians,
   downsampleGrid,
+  makeTwist,
   makeTwist2D,
   poseToRobotPose,
   quaternionToEuler,
@@ -30,6 +31,13 @@ export {
   STOP_TWIST,
   yawToQuaternion,
 } from "./codec";
+export {
+  DEFAULT_ROBOT_NAMESPACE,
+  isValidNamespace,
+  normalizeNamespace,
+  ROBOT_NS_TOKEN,
+  resolveName,
+} from "./names";
 export { __resetRos, configureRos, getRos } from "./singleton";
 export {
   SERVICES,
