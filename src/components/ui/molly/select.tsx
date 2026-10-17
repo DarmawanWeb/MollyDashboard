@@ -74,7 +74,12 @@ export function MollySelect<TValue extends string = string>({
   return (
     <BaseSelect.Root
       value={value}
-      onValueChange={(v) => onChange(v as TValue)}
+      onValueChange={(v) => {
+        // Base UI reports null when the current value leaves the options
+        // (e.g. the picked item is filtered out); there is no "cleared"
+        // state here, so callers only ever see real values.
+        if (v !== null) onChange(v as TValue);
+      }}
       disabled={disabled}
     >
       <BaseSelect.Trigger
