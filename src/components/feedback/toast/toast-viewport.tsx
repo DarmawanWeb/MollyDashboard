@@ -1,7 +1,7 @@
 "use client";
 
+import { useToastStore } from "@/stores/use-toast-store";
 import { ToastItem } from "./toast";
-import { useToastStore } from "./toast-store";
 
 /**
  * Fixed-position container for active toasts.

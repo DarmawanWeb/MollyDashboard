@@ -3,7 +3,7 @@
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { type Toast, useToastStore } from "./toast-store";
+import { type Toast, useToastStore } from "@/stores/use-toast-store";
 
 const KIND_STYLES = {
   info: {

@@ -1,8 +1,8 @@
-export { ToastItem } from "./toast";
 export {
   type Toast,
   type ToastKind,
   toast,
   useToastStore,
-} from "./toast-store";
+} from "@/stores/use-toast-store";
+export { ToastItem } from "./toast";
 export { ToastViewport } from "./toast-viewport";
