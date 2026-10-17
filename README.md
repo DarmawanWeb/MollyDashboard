@@ -112,4 +112,4 @@ pnpm check        # lint + type-check + build (CI mirror)
 
 ## License
 
-MIT
+Apache License 2.0, see [LICENSE](LICENSE).
