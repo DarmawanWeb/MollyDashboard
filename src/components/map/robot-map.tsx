@@ -12,7 +12,11 @@ import { useRobotStore } from "@/stores/use-robot-store";
 import { useSiteStore } from "@/stores/use-site-store";
 import { useTourStore } from "@/stores/use-tour-store";
 import type { POI } from "@/types";
-import { type MapPlacement, OccupancyCanvas } from "./occupancy-canvas";
+import {
+  type MapPlacement,
+  type MapRoute,
+  OccupancyCanvas,
+} from "./occupancy-canvas";
 
 interface RobotMapProps {
   /** Draw the planned path and the goal */
@@ -21,6 +25,8 @@ interface RobotMapProps {
   showVisitors?: boolean;
   showPoiLabels?: boolean;
   selectedPoiId?: string | null;
+  /** A tour's stops in order (tour editor) */
+  route?: MapRoute | null;
   placement?: MapPlacement;
   onPoiClick?: (poi: POI) => void;
   className?: string;
@@ -36,6 +42,7 @@ export function RobotMap({
   showVisitors = true,
   showPoiLabels = false,
   selectedPoiId = null,
+  route = null,
   placement,
   onPoiClick,
   className,
@@ -81,6 +88,7 @@ export function RobotMap({
         path={showPath && walking ? path : []}
         goal={showPath && walking ? planner.goal : null}
         visitors={visitorsOnMap}
+        route={route}
         placement={placement}
         onPoiClick={onPoiClick}
       />

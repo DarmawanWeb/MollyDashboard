@@ -7,10 +7,13 @@ import { LocalizationPanel } from "./_components/localization-panel";
 import { MappingPanel } from "./_components/mapping-panel";
 import { POIManagement } from "./_components/poi-management";
 import { SitePanel } from "./_components/site-panel";
+import { TourManagement } from "./_components/tour-management";
 import { usePoiEditor } from "./_hooks/use-poi-editor";
+import { useTourEditor } from "./_hooks/use-tour-editor";
 
 export default function MappingPage() {
   const editor = usePoiEditor();
+  const tours = useTourEditor();
 
   return (
     <div className="flex h-full w-full min-h-0">
@@ -19,6 +22,7 @@ export default function MappingPage() {
           showPoiLabels
           showVisitors={false}
           selectedPoiId={editor.selectedId}
+          route={tours.route}
           placement={{
             active: editor.placing,
             defaultYaw: editor.draft?.yaw ?? 0,
@@ -47,6 +51,7 @@ export default function MappingPage() {
         <MappingPanel />
         <LocalizationPanel />
         <POIManagement editor={editor} />
+        <TourManagement editor={tours} />
       </AppSidebar>
     </div>
   );

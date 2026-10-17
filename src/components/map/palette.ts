@@ -37,6 +37,11 @@ export const PALETTE = {
   path: "rgba(34,211,238,0.85)",
   goal: "#f59e0b",
 
+  // tour route (editor preview)
+  route: "rgba(168,85,247,0.7)",
+  routeReturn: "rgba(168,85,247,0.45)",
+  routeNumber: "#ffffff",
+
   // visitors around the robot
   visitor: "#f97316",
   visitorHalo: "rgba(249,115,22,0.25)",

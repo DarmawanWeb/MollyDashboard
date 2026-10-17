@@ -22,6 +22,11 @@ import { drawGoal, drawPath } from "./renderers/path";
 import { drawPlacement } from "./renderers/placement";
 import { drawPois } from "./renderers/poi";
 import { drawRobot } from "./renderers/robot";
+import {
+  drawRouteLegs,
+  drawRouteNumbers,
+  type MapRoute,
+} from "./renderers/route";
 import { drawTooltip } from "./renderers/tooltip";
 import { drawTrail } from "./renderers/trail";
 import { drawVisitors } from "./renderers/visitors";
@@ -29,6 +34,8 @@ import { drawVisitors } from "./renderers/visitors";
 const POI_HIT_RADIUS = 10; // pixels
 const CLICK_SLOP_PX = 5; // pointer travel that still counts as a click
 const HEADING_DRAG_PX = 10; // drag needed to set a heading while placing
+
+export type { MapRoute };
 
 export interface MapPlacement {
   /** Next click (and drag, for the heading) places a pose on the map. */
@@ -51,6 +58,8 @@ export interface OccupancyCanvasProps {
   goal?: { x: number; y: number; yaw: number } | null;
   /** Visitors, already in the map frame */
   visitors?: ReadonlyArray<{ x: number; y: number; confidence: number }>;
+  /** A tour's stops in order (tour editor) */
+  route?: MapRoute | null;
   /** Place a pose by click + drag (POI editor) */
   placement?: MapPlacement;
   /** Fires when user clicks on empty space. World coords in meters. */
@@ -94,6 +103,7 @@ export function OccupancyCanvas({
   path = [],
   goal = null,
   visitors = [],
+  route = null,
   placement,
   onMapClick,
   onPoiClick,
@@ -135,6 +145,7 @@ export function OccupancyCanvas({
     path,
     goal,
     visitors,
+    route,
     placementPreview: drag,
   };
   const renderInputsRef = useRef(renderInputs);
@@ -316,6 +327,7 @@ interface RenderInputs {
   path: ReadonlyArray<PathPoint>;
   goal: { x: number; y: number; yaw: number } | null;
   visitors: ReadonlyArray<{ x: number; y: number; confidence: number }>;
+  route: MapRoute | null;
   placementPreview: { x: number; y: number; yaw: number } | null;
 }
 
@@ -341,6 +353,7 @@ function renderFrame(
     path,
     goal,
     visitors,
+    route,
     placementPreview,
   } = inp;
 
@@ -372,6 +385,7 @@ function renderFrame(
 
   drawGridLines(ctx, grid, viewport, cW, cH);
   drawTrail(ctx, trail, grid, viewport, cW, cH);
+  if (route) drawRouteLegs(ctx, route, grid, viewport, cW, cH);
   drawPath(ctx, path, grid, viewport, cW, cH);
   if (goal) drawGoal(ctx, goal, grid, viewport, cW, cH);
   drawPois(ctx, grid, viewport, cW, cH, {
@@ -381,6 +395,7 @@ function renderFrame(
     selectedId: selectedPoiId,
     showLabels: showPoiLabels,
   });
+  if (route) drawRouteNumbers(ctx, route, grid, viewport, cW, cH);
   drawVisitors(ctx, visitors, grid, viewport, cW, cH);
   if (pose) {
     drawRobot(ctx, pose, grid, viewport, cW, cH, pulse);
