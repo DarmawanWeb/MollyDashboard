@@ -37,7 +37,7 @@ Then:
 pnpm dev
 ```
 
-Open `http://localhost:3000` — redirects to `/monitor`. The URLs and the robot namespace can
+Open `http://localhost:3010` (or `PORT=… pnpm dev`) — redirects to `/monitor`. The URLs and the robot namespace can
 also be changed in **Settings → Connection** without a rebuild.
 
 ## Mock Robot

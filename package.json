@@ -5,9 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port ${PORT:-3010}",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port ${PORT:-3010}",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "format": "biome format . --write",

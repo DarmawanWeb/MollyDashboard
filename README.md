@@ -34,7 +34,7 @@ The robot side is [DarmawanRobotics/Molly](https://github.com/DarmawanRobotics/M
 ```bash
 pnpm install
 cp .env.example .env.local   # robot address, camera server, mock flag
-pnpm dev                     # http://localhost:3000
+pnpm dev                     # http://localhost:3010 (PORT=… to change)
 ```
 
 No robot around? Development builds run against an in-memory mock robot (map, POIs,
@@ -59,6 +59,32 @@ Build-time defaults from `.env.example` (all `NEXT_PUBLIC_*`, read in `src/lib/e
 | `NEXT_PUBLIC_ROSBRIDGE_URL` | `ws://localhost:9090` | rosbridge WebSocket, `ws://` or `wss://` |
 | `NEXT_PUBLIC_VIDEO_SERVER_URL` | `http://localhost:8080` | web_video_server base |
 | `NEXT_PUBLIC_USE_MOCKS` | `true` in dev, `false` in production | force the mock robot |
+
+## Deploy
+
+On a shared server (the Mac mini next to NETRA, Taksu and the monitoring stack) the dashboard runs
+in Docker as the compose project `molly`, published on the loopback only, for cloudflared:
+
+```bash
+cp deploy/.env.example deploy/.env   # port, bind address, robot defaults
+deploy/deploy.sh                     # checks the port, builds, starts, waits for /monitor
+```
+
+| Port | Used by |
+|---|---|
+| 4470 | Molly Dashboard (`MOLLY_PORT`) |
+| 4480 | Taksu |
+| 4490, 4491 | NETRA |
+| 80, 8080, 3000, 3100, 9090, 11434 | already taken on the Mac mini (web, Grafana, Loki, Prometheus, Ollama) |
+
+`deploy.sh` stops before building when another program or compose project holds `MOLLY_PORT`. In
+`~/.cloudflared/config.yml`, point the hostname at `http://127.0.0.1:4470`.
+
+An https page cannot open the robot's plain `ws://` rosbridge, so through the tunnel the dashboard
+is a demo on the mock robot (`NEXT_PUBLIC_USE_MOCKS=true`). To drive a real robot, open it over the
+LAN: `MOLLY_BIND=0.0.0.0` and `http://<server>:4470` from a computer on the robot's network, or
+run `pnpm build && pnpm start` on a laptop there. In development the dashboard uses port 3010, so
+it does not clash with NETRA's dashboard (3000) on the same laptop.
 
 ## Routes
 
