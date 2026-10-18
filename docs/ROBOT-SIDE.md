@@ -46,7 +46,8 @@ placeholder with the namespace from Settings.
 | `/{robot}/battery`, `/{robot}/imu`, `/{robot}/state` | `BatteryState`, `Imu`, `lite3_interfaces/msg/RobotState` | robot status |
 | `/rosout` | `rcl_interfaces/msg/Log` | log viewer |
 
-`molly_interfaces` types are `molly_interfaces/msg/<Name>` on the wire.
+Tour and speech types are `molly_interfaces/msg/<Name>` on the wire; navigation, sites, POIs,
+mapping, the path finder and visitors are `dharma_interfaces/msg/<Name>`.
 
 ## Published
 

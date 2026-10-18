@@ -691,7 +691,7 @@ function createMockRobot(): MockRobot {
     listTopics: () =>
       later([
         { name: "/map", type: "nav_msgs/msg/OccupancyGrid" },
-        { name: "/site/pois", type: "molly_interfaces/msg/PoiArray" },
+        { name: "/site/pois", type: "dharma_interfaces/msg/PoiArray" },
         { name: "/tour/state", type: "molly_interfaces/msg/TourState" },
       ]),
   };

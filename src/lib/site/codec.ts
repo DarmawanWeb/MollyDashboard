@@ -1,6 +1,6 @@
 /**
  * Site, POI, tour and mapping conversions between the wire
- * (molly_interfaces) and the dashboard's UI shapes.
+ * (dharma_interfaces) and the dashboard's UI shapes.
  */
 
 import type {

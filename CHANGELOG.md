@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Navigation, site, POI, mapping, path finder and visitor types are `dharma_interfaces` (Molly
+  1.0.0 runs on the Dharma packages); tour and speech types stay `molly_interfaces`.
+
 ### Docs
 - README: CI badge, configuration table for the `NEXT_PUBLIC_*` variables, link to this
   changelog.

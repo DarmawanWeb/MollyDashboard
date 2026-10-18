@@ -76,6 +76,9 @@ function topic<TMsg>(name: string, type: string): TopicDef<TMsg> {
   return { name, type };
 }
 
+// Navigation, sites, POIs, mapping, the path finder and visitors come from the Dharma stack;
+// the tour and speech types are Molly's own.
+const DHARMA_MSG = "dharma_interfaces/msg";
 const MOLLY_MSG = "molly_interfaces/msg";
 
 export const TOPICS = {
@@ -92,23 +95,26 @@ export const TOPICS = {
   ODOMETRY_STATUS: topic<StdString>("/odometry/status", "std_msgs/msg/String"),
 
   // Sites and mapping
-  SITE_STATUS: topic<SiteStatusWire>("/site/status", `${MOLLY_MSG}/SiteStatus`),
-  SITE_POIS: topic<PoiArrayWire>("/site/pois", `${MOLLY_MSG}/PoiArray`),
-  SITE_TOURS: topic<TourArrayWire>("/site/tours", `${MOLLY_MSG}/TourArray`),
+  SITE_STATUS: topic<SiteStatusWire>(
+    "/site/status",
+    `${DHARMA_MSG}/SiteStatus`,
+  ),
+  SITE_POIS: topic<PoiArrayWire>("/site/pois", `${DHARMA_MSG}/PoiArray`),
+  SITE_TOURS: topic<TourArrayWire>("/site/tours", `${DHARMA_MSG}/TourArray`),
   MAPPING_STATUS: topic<MappingStatusWire>(
     "/mapping/status",
-    `${MOLLY_MSG}/MappingStatus`,
+    `${DHARMA_MSG}/MappingStatus`,
   ),
 
   // Path finder and follower
   PLANNER_STATUS: topic<PlannerStatusWire>(
     "/planner/status",
-    `${MOLLY_MSG}/PlannerStatus`,
+    `${DHARMA_MSG}/PlannerStatus`,
   ),
   PLANNER_PATH: topic<Path>("/planner/path", "nav_msgs/msg/Path"),
   NAVIGATION_STATUS: topic<NavigationStatusWire>(
     "/navigation/status",
-    `${MOLLY_MSG}/NavigationStatus`,
+    `${DHARMA_MSG}/NavigationStatus`,
   ),
 
   // Tour (robot-side authority)
@@ -128,7 +134,7 @@ export const TOPICS = {
   ),
   VISITORS: topic<VisitorsWire>(
     "/perception/visitors",
-    `${MOLLY_MSG}/Visitors`,
+    `${DHARMA_MSG}/Visitors`,
   ),
 
   // Control mux
@@ -191,6 +197,7 @@ function service<TReq, TRes>(
   return { name, type };
 }
 
+const DHARMA_SRV = "dharma_interfaces/srv";
 const MOLLY_SRV = "molly_interfaces/srv";
 const TRIGGER = "std_srvs/srv/Trigger";
 const SET_BOOL = "std_srvs/srv/SetBool";
@@ -203,15 +210,15 @@ export const SERVICES = {
   // Sites and mapping
   SITE_LIST: service<Record<string, never>, ListSitesResponseWire>(
     "/site/list",
-    `${MOLLY_SRV}/ListSites`,
+    `${DHARMA_SRV}/ListSites`,
   ),
   SITE_LOAD: service<LoadSiteRequestWire, ResultWire>(
     "/site/load",
-    `${MOLLY_SRV}/LoadSite`,
+    `${DHARMA_SRV}/LoadSite`,
   ),
   MAPPING_START: service<StartMappingRequestWire, ResultWire>(
     "/mapping/start",
-    `${MOLLY_SRV}/StartMapping`,
+    `${DHARMA_SRV}/StartMapping`,
   ),
   MAPPING_STOP: trigger("/mapping/stop"),
   MAPPING_SAVE: trigger("/mapping/save"),
@@ -221,29 +228,29 @@ export const SERVICES = {
   // POIs and tours
   SAVE_POI: service<SavePoiRequestWire, SavePoiResponseWire>(
     "/site/save_poi",
-    `${MOLLY_SRV}/SavePoi`,
+    `${DHARMA_SRV}/SavePoi`,
   ),
   DELETE_POI: service<DeleteByIdRequestWire, ResultWire>(
     "/site/delete_poi",
-    `${MOLLY_SRV}/DeleteById`,
+    `${DHARMA_SRV}/DeleteById`,
   ),
   SAVE_TOUR: service<SaveTourRequestWire, SaveTourResponseWire>(
     "/site/save_tour",
-    `${MOLLY_SRV}/SaveTour`,
+    `${DHARMA_SRV}/SaveTour`,
   ),
   DELETE_TOUR: service<DeleteByIdRequestWire, ResultWire>(
     "/site/delete_tour",
-    `${MOLLY_SRV}/DeleteById`,
+    `${DHARMA_SRV}/DeleteById`,
   ),
 
   // Path finder and follower
   PLANNER_PLAN: service<PlanPathRequestWire, PlanPathResponseWire>(
     "/planner/plan",
-    `${MOLLY_SRV}/PlanPath`,
+    `${DHARMA_SRV}/PlanPath`,
   ),
   PLANNER_GO_TO: service<GoToRequestWire, ResultWire>(
     "/planner/go_to",
-    `${MOLLY_SRV}/GoTo`,
+    `${DHARMA_SRV}/GoTo`,
   ),
   PLANNER_CANCEL: trigger("/planner/cancel"),
   NAVIGATION_PAUSE: service<SetBoolRequest, TriggerResponse>(
@@ -296,7 +303,7 @@ export const SERVICES = {
   // Control mux
   SET_MODE: service<SetModeRequestWire, ResultWire>(
     "/bridge/set_mode",
-    `${MOLLY_SRV}/SetMode`,
+    `${DHARMA_SRV}/SetMode`,
   ),
   ESTOP: service<SetBoolRequest, TriggerResponse>("/bridge/estop", SET_BOOL),
 

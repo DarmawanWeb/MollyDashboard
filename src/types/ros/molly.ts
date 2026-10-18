@@ -1,7 +1,7 @@
 /**
- * Wire formats of the molly_interfaces package (Molly robot stack).
+ * Wire formats of the molly_interfaces and dharma_interfaces packages (Molly on Dharma).
  *
- * Mirrors src/molly_interfaces/{msg,srv} in the Molly repository field by
+ * Mirrors molly_interfaces (Molly repository) and dharma_interfaces field by
  * field. Lives in types/ros/ so lib/ros/topics.ts can import it without a
  * cycle; conversion to UI shapes happens in lib/site, lib/tour, lib/robot.
  */
@@ -13,7 +13,7 @@ import type { RosHeader } from "./std";
  * Navigation
  * ------------------------------------------------------------------------- */
 
-/** molly_interfaces/msg/Waypoint — x, y in m (map), yaw in degrees */
+/** dharma_interfaces/msg/Waypoint — x, y in m (map), yaw in degrees */
 export interface WaypointWire {
   x: number;
   y: number;
@@ -21,14 +21,14 @@ export interface WaypointWire {
   dwell_sec: number;
 }
 
-/** molly_interfaces/msg/NavigationStatus */
+/** dharma_interfaces/msg/NavigationStatus */
 export interface NavigationStatusWire {
   header: RosHeader;
   state: string;
   message: string;
 }
 
-/** molly_interfaces/msg/PlannerStatus */
+/** dharma_interfaces/msg/PlannerStatus */
 export interface PlannerStatusWire {
   header: RosHeader;
   /** idle, planning, following, replanning, arrived, failed, cancelled */
@@ -47,7 +47,7 @@ export interface PlannerStatusWire {
  * Sites, POIs, tours, mapping
  * ------------------------------------------------------------------------- */
 
-/** molly_interfaces/msg/Poi — x, y in m (map frame), yaw in rad */
+/** dharma_interfaces/msg/Poi — x, y in m (map frame), yaw in rad */
 export interface PoiWire {
   id: string;
   name: string;
@@ -61,14 +61,14 @@ export interface PoiWire {
   dwell_sec: number;
 }
 
-/** molly_interfaces/msg/PoiArray */
+/** dharma_interfaces/msg/PoiArray */
 export interface PoiArrayWire {
   header: RosHeader;
   site: string;
   pois: PoiWire[];
 }
 
-/** molly_interfaces/msg/Tour */
+/** dharma_interfaces/msg/Tour */
 export interface TourWire {
   id: string;
   name: string;
@@ -77,14 +77,14 @@ export interface TourWire {
   return_poi_id: string;
 }
 
-/** molly_interfaces/msg/TourArray */
+/** dharma_interfaces/msg/TourArray */
 export interface TourArrayWire {
   header: RosHeader;
   site: string;
   tours: TourWire[];
 }
 
-/** molly_interfaces/msg/SiteStatus */
+/** dharma_interfaces/msg/SiteStatus */
 export interface SiteStatusWire {
   header: RosHeader;
   site: string;
@@ -97,7 +97,7 @@ export interface SiteStatusWire {
   message: string;
 }
 
-/** molly_interfaces/msg/MappingStatus */
+/** dharma_interfaces/msg/MappingStatus */
 export interface MappingStatusWire {
   header: RosHeader;
   active: boolean;
@@ -151,7 +151,7 @@ export interface SpeechStatusWire {
   message: string;
 }
 
-/** molly_interfaces/msg/Visitors — positions in base_link */
+/** dharma_interfaces/msg/Visitors — positions in base_link */
 export interface VisitorsWire {
   header: RosHeader;
   positions: Point[];
