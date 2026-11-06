@@ -18,7 +18,8 @@ const MAX_ENTRIES = 2000;
 const DUPLICATE_WINDOW_MS = 3 * 60_000;
 
 const dataDir = () =>
-  process.env.DATA_DIR?.trim() || path.join(process.cwd(), "data");
+  process.env.DATA_DIR?.trim() ||
+  path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
 const historyFile = () => path.join(dataDir(), "conversations.jsonl");
 const metaFile = () => path.join(dataDir(), "conversations.meta.json");
 

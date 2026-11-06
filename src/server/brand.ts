@@ -14,7 +14,12 @@ const EXTENSIONS = ["svg", "png", "webp", "jpg"] as const;
 function find(file: string): string | undefined {
   for (const ext of EXTENSIONS) {
     const url = `/brand/${file}.${ext}`;
-    if (existsSync(path.join(process.cwd(), "public", url))) return url;
+    if (
+      existsSync(
+        path.join(/*turbopackIgnore: true*/ process.cwd(), "public", url),
+      )
+    )
+      return url;
   }
   return undefined;
 }

@@ -20,6 +20,9 @@
 # production
 /build
 
+# conversation history (DATA_DIR)
+/data
+
 # misc
 .DS_Store
 *.pem

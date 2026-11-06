@@ -14,8 +14,26 @@ services:
         NEXT_PUBLIC_VIDEO_SERVER_URL: ${NEXT_PUBLIC_VIDEO_SERVER_URL:-http://localhost:8080}
         NEXT_PUBLIC_USE_MOCKS: ${NEXT_PUBLIC_USE_MOCKS:-false}
     restart: unless-stopped
+    environment:
+      # Ask Molly's LLM gateway, read at run time (deploy/.env)
+      LLM_API_URL: ${LLM_API_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_SYSTEM_PROMPT: ${LLM_SYSTEM_PROMPT:-}
+      DATA_DIR: /app/data
+    extra_hosts:
+      # reach services on the host (e.g. Ollama) as host.docker.internal on Linux too
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # conversation history survives rebuilds
+      - molly-data:/app/data
+      # edit the venue knowledge without a rebuild:
+      # - ./config/assistant.md:/app/config/assistant.md:ro
     ports:
       - "${MOLLY_BIND:-127.0.0.1}:${MOLLY_PORT:-4470}:3000"
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  molly-data:
