@@ -11,10 +11,12 @@ import { useNavigationStore } from "@/stores/use-navigation-store";
 import { useRobotStore } from "@/stores/use-robot-store";
 import { useSiteStore } from "@/stores/use-site-store";
 import { useTourStore } from "@/stores/use-tour-store";
-import type { POI } from "@/types";
+import type { POI, RobotPose } from "@/types";
+import type { OccupancyGrid } from "@/types/ros";
 import {
   type MapPlacement,
   type MapRoute,
+  type MapVariant,
   OccupancyCanvas,
 } from "./occupancy-canvas";
 
@@ -29,6 +31,8 @@ interface RobotMapProps {
   route?: MapRoute | null;
   placement?: MapPlacement;
   onPoiClick?: (poi: POI) => void;
+  /** "display": visitor-friendly, no technical strip or overlays */
+  variant?: MapVariant;
   className?: string;
 }
 
@@ -45,6 +49,7 @@ export function RobotMap({
   route = null,
   placement,
   onPoiClick,
+  variant = "operator",
   className,
 }: RobotMapProps) {
   const mock = useMockMode();
@@ -76,7 +81,11 @@ export function RobotMap({
 
   return (
     <div
-      className={cn("panel w-full h-full relative overflow-hidden", className)}
+      className={cn(
+        "relative h-full w-full overflow-hidden",
+        variant === "operator" && "panel",
+        className,
+      )}
     >
       <OccupancyCanvas
         grid={grid}
@@ -91,22 +100,41 @@ export function RobotMap({
         route={route}
         placement={placement}
         onPoiClick={onPoiClick}
+        variant={variant}
       />
 
-      <div className="absolute bottom-3 right-3 flex items-center gap-2 font-mono text-[10px] text-txt-muted pointer-events-none">
-        {mapping && <span className="text-violet">● mapping</span>}
+      {variant === "operator" && (
+        <MapStrip mapping={mapping} pose={pose} site={site} grid={grid} />
+      )}
+    </div>
+  );
+}
+
+function MapStrip({
+  mapping,
+  pose,
+  site,
+  grid,
+}: {
+  mapping: boolean;
+  pose: RobotPose | null;
+  site: string;
+  grid: OccupancyGrid | null;
+}) {
+  return (
+    <div className="absolute bottom-3 right-3 flex items-center gap-2 font-mono text-[10px] text-txt-muted pointer-events-none">
+      {mapping && <span className="text-violet">● mapping</span>}
+      <span>
+        {pose
+          ? `${pose.x.toFixed(2)}, ${pose.y.toFixed(2)} m · ${Math.round((pose.yaw * 180) / Math.PI)}°`
+          : "not localized"}
+      </span>
+      <span>{site ? `site ${site}` : "no site loaded"}</span>
+      {grid && (
         <span>
-          {pose
-            ? `${pose.x.toFixed(2)}, ${pose.y.toFixed(2)} m · ${Math.round((pose.yaw * 180) / Math.PI)}°`
-            : "not localized"}
+          {grid.info.width}×{grid.info.height} @ {grid.info.resolution}m
         </span>
-        <span>{site ? `site ${site}` : "no site loaded"}</span>
-        {grid && (
-          <span>
-            {grid.info.width}×{grid.info.height} @ {grid.info.resolution}m
-          </span>
-        )}
-      </div>
+      )}
     </div>
   );
 }

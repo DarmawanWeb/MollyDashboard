@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { deriveStory, nearestPlace, type Story } from "@/lib/display/story";
 import { isWalking } from "@/lib/navigation/codec";
 import { useNavigationStore } from "@/stores/use-navigation-store";
@@ -8,27 +9,33 @@ import { useSiteStore } from "@/stores/use-site-store";
 import { useTourStore } from "@/stores/use-tour-store";
 import { useRobotActivity } from "./use-robot-activity";
 
-/** What Molly is doing, in visitor terms (lib/display/story.ts). */
+/**
+ * What Molly is doing, in visitor terms (lib/display/story.ts). Selectors
+ * return names, not the pose, so a component re-renders when the story
+ * changes, not at the pose rate; the result keeps its identity meanwhile.
+ */
 export function useRobotStory(): Story {
   const activity = useRobotActivity();
-  const pose = useRobotStore((s) => s.pose);
   const pois = useSiteStore((s) => s.pois);
+  const placeName = useRobotStore(
+    (s) => nearestPlace(s.pose, pois)?.name ?? "",
+  );
   const tourState = useTourStore((s) => s.state);
   const tourActivity = useTourStore((s) => s.activity);
   const tourPoiName = useTourStore((s) => s.activePoiName);
-  const planner = useNavigationStore((s) => s.planner);
+  const goalName = useNavigationStore((s) =>
+    isWalking(s.planner.state) && s.planner.goalId
+      ? (pois.find((p) => p.id === s.planner.goalId)?.name ?? "")
+      : "",
+  );
 
-  const goalName =
-    isWalking(planner.state) && planner.goalId
-      ? (pois.find((p) => p.id === planner.goalId)?.name ?? "")
-      : "";
-
-  return deriveStory({
+  const { kind, place, target } = deriveStory({
     activity,
     tourState,
     tourActivity,
     tourPoiName,
     goalName,
-    placeName: nearestPlace(pose, pois)?.name ?? "",
+    placeName,
   });
+  return useMemo(() => ({ kind, place, target }), [kind, place, target]);
 }

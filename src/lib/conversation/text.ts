@@ -20,6 +20,17 @@ export function plainText(text: string): string {
     .trim();
 }
 
+/**
+ * An answer while it streams in: markdown markers vanish at once, even
+ * before their closing pair arrives (plainText cleans the final answer).
+ */
+export function streamingText(text: string): string {
+  return text
+    .replace(/\*\*|__|`/g, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .trimStart();
+}
+
 /** Same question and answer, whitespace and case aside. */
 export function conversationKey(question: string, answer: string): string {
   const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();

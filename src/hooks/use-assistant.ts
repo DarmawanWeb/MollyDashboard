@@ -18,11 +18,12 @@ import { useSiteStore } from "@/stores/use-site-store";
 import { useTourStore } from "@/stores/use-tour-store";
 import type {
   AnswerEngine,
+  AssistantContext,
   ChatLanguage,
   ConversationEntry,
   QuestionSource,
 } from "@/types";
-import { useMockMode } from "./use-mock-mode";
+import { type DisplayMode, useDisplayMode } from "./use-display-mode";
 import { useRobotApi } from "./use-robot-api";
 import { useRobotStory } from "./use-robot-story";
 
@@ -44,13 +45,26 @@ const FAILED: Record<ChatLanguage, { busy: string; down: string }> = {
   },
 };
 
-function contextNow(story: Story, demo: boolean) {
+function contextNow(story: Story, mode: DisplayMode): AssistantContext {
+  if (mode === "offline") {
+    // the stores hold the operator pages' mock fallback: tell the model nothing
+    return {
+      mode: "live",
+      site: "",
+      place: "",
+      activity: "resting (not connected right now)",
+      battery: null,
+      visitorsNearby: 0,
+      tour: null,
+      places: [],
+    };
+  }
   const robot = useRobotStore.getState();
   const site = useSiteStore.getState();
   const tour = useTourStore.getState();
   const interaction = useInteractionStore.getState();
   return buildAssistantContext({
-    demo,
+    demo: mode === "demo",
     site: site.status.site,
     story,
     battery: robot.battery?.percentage ?? null,
@@ -77,7 +91,7 @@ function contextNow(story: Story, demo: boolean) {
  */
 export function useAssistant() {
   const api = useRobotApi();
-  const mock = useMockMode();
+  const mode = useDisplayMode();
   const story = useRobotStory();
   const status = useConversationStore((s) => s.status);
   const choice = useSettingsStore((s) => s.interaction.engine);
@@ -86,17 +100,25 @@ export function useAssistant() {
 
   const engine: AnswerEngine =
     choice === "robot" || !status?.external ? "robot" : "llm";
+  /** The robot answers only when it is there (offline: the mock would). */
+  const available = engine === "llm" || mode !== "offline";
 
+  /** Say the answer through the robot; every screen learns it was spoken. */
   const speakOut = async (
     id: string,
     answer: string,
     language: ChatLanguage,
   ) => {
     const text = plainText(answer);
-    if (!text) return;
+    if (!text || mode === "offline") return;
     const res = await api.say(text, language, true);
-    if (res.success)
-      useConversationStore.getState().patch(id, { spoken: true });
+    if (!res.success) return;
+    const store = useConversationStore.getState();
+    store.patch(id, { spoken: true, updatedAt: Date.now() });
+    const entry = useConversationStore
+      .getState()
+      .entries.find((e) => e.id === id);
+    if (entry) void saveConversation(toStored(entry));
   };
 
   const askLlm = async (entry: ConversationEntry, opts: AskOptions) => {
@@ -109,7 +131,7 @@ export function useAssistant() {
           id: entry.id,
           question: entry.question,
           language: opts.language,
-          context: contextNow(story, mock),
+          context: contextNow(story, mode),
           history: recentTurns(store.entries.filter((e) => e.id !== entry.id)),
         },
         (piece) => {
@@ -178,7 +200,7 @@ export function useAssistant() {
 
   const ask = async (question: string, opts: AskOptions): Promise<void> => {
     const q = question.trim();
-    if (!q || inFlight.current) return;
+    if (!q || inFlight.current || !available) return;
     inFlight.current = true;
     const now = Date.now();
     const entry: ConversationEntry = {
@@ -204,5 +226,5 @@ export function useAssistant() {
     }
   };
 
-  return { ask, busy, engine, status };
+  return { ask, busy, engine, status, available };
 }

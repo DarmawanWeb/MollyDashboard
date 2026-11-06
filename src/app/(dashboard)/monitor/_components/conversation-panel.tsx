@@ -120,7 +120,7 @@ function Exchange({ entry }: { entry: ConversationEntry }) {
  * configured, otherwise from the robot (/interaction/ask).
  */
 export function ConversationPanel() {
-  const { ask, busy, engine, status } = useAssistant();
+  const { ask, busy, engine, status, available } = useAssistant();
   const conversation = useConversationStore((s) => s.entries);
   const language = useSettingsStore((s) => s.interaction.language);
   const speakDefault = useSettingsStore((s) => s.interaction.speakAnswers);
@@ -160,9 +160,11 @@ export function ConversationPanel() {
           <Bot size={12} className="text-cyan" />
         )}
         <span className="truncate">
-          {engine === "llm"
-            ? `External LLM${status?.model ? ` · ${status.model}` : ""}${status?.host ? ` @ ${status.host}` : ""}`
-            : "Robot conversation node"}
+          {!available
+            ? "Robot offline — configure LLM_API_URL to answer without it"
+            : engine === "llm"
+              ? `External LLM${status?.model ? ` · ${status.model}` : ""}${status?.host ? ` @ ${status.host}` : ""}`
+              : "Robot conversation node"}
         </span>
       </div>
 
@@ -194,7 +196,8 @@ export function ConversationPanel() {
               send();
             }
           }}
-          placeholder="Ask Molly… (Enter)"
+          placeholder={available ? "Ask Molly… (Enter)" : "Robot offline"}
+          disabled={!available}
           aria-label="Question for Molly"
           textareaSize="sm"
           rows={2}
@@ -204,7 +207,7 @@ export function ConversationPanel() {
         <MollyButton
           size="xs"
           onClick={send}
-          disabled={!question.trim() || busy}
+          disabled={!question.trim() || busy || !available}
           aria-label="Ask"
           title="Ask (Enter)"
           className="absolute right-2 bottom-2"

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     default: `${BRAND.robot} — ${BRAND.tagline.en}`,
     template: `%s · ${BRAND.robot}`,
   },
-  description: `${BRAND.robot}, the ${BRAND.tagline.en.toLowerCase()} by ${BRAND.maker.name} at ${BRAND.partner.name}.`,
+  description: `${BRAND.robot}, the AI tour guide robot by ${BRAND.maker.name} at the ${BRAND.partner.name} experience center.`,
   applicationName: `${BRAND.robot} Dashboard`,
 };
 
