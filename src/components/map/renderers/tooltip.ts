@@ -1,6 +1,7 @@
 import { canvasFont, PALETTE } from "../palette";
 
 interface TooltipLine {
+  /** Empty: a plain line (display variant), no "label:" prefix */
   label: string;
   value: string;
 }
@@ -8,8 +9,8 @@ interface TooltipLine {
 /**
  * Draws a small floating tooltip near a screen-space point.
  *
- * Used for POI hover info (name + cell coords + motion action). Auto-flips
- * to the left of the anchor when it would overflow the right edge.
+ * Used for POI hover info. Auto-flips to the left of the anchor when it
+ * would overflow the right edge.
  */
 export function drawTooltip(
   ctx: CanvasRenderingContext2D,
@@ -20,15 +21,20 @@ export function drawTooltip(
 ): void {
   if (lines.length === 0) return;
 
-  ctx.font = canvasFont(11);
-  const lineH = 15;
-  const padX = 8;
-  const padY = 6;
+  const plain = lines.every((l) => l.label === "");
+  const font = (i: number) =>
+    plain
+      ? canvasFont(i === 0 ? 13 : 12, i === 0 ? 700 : 500, "sans")
+      : canvasFont(11);
+  const prefix = (l: TooltipLine) => (l.label ? `${l.label}: ` : "");
+  const lineH = plain ? 18 : 15;
+  const padX = plain ? 10 : 8;
+  const padY = plain ? 8 : 6;
 
   let maxW = 0;
-  for (const line of lines) {
-    const text = `${line.label}: ${line.value}`;
-    const w = ctx.measureText(text).width;
+  for (const [i, line] of lines.entries()) {
+    ctx.font = font(i);
+    const w = ctx.measureText(`${prefix(line)}${line.value}`).width;
     if (w > maxW) maxW = w;
   }
 
@@ -43,17 +49,20 @@ export function drawTooltip(
   ctx.fillStyle = PALETTE.overlay;
   ctx.strokeStyle = PALETTE.overlayBorder;
   ctx.lineWidth = 1;
-  ctx.fillRect(x, y, boxW, boxH);
-  ctx.strokeRect(x + 0.5, y + 0.5, boxW, boxH);
+  ctx.beginPath();
+  ctx.roundRect(x + 0.5, y + 0.5, boxW, boxH, 8);
+  ctx.fill();
+  ctx.stroke();
 
   ctx.textBaseline = "middle";
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const [i, line] of lines.entries()) {
+    ctx.font = font(i);
     const ly = y + padY + i * lineH + lineH / 2;
+    const label = prefix(line);
     ctx.fillStyle = PALETTE.textMuted;
-    ctx.fillText(`${line.label}: `, x + padX, ly);
-    const labelW = ctx.measureText(`${line.label}: `).width;
-    ctx.fillStyle = PALETTE.text;
+    if (label) ctx.fillText(label, x + padX, ly);
+    const labelW = label ? ctx.measureText(label).width : 0;
+    ctx.fillStyle = plain && i > 0 ? PALETTE.textMuted : PALETTE.text;
     ctx.fillText(line.value, x + padX + labelW, ly);
   }
   ctx.textBaseline = "alphabetic";

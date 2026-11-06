@@ -8,12 +8,13 @@ import {
   useRef,
   useState,
 } from "react";
+import { useThemeStore } from "@/stores/use-theme-store";
 import type { OccupancyGrid } from "@/types/ros";
 import type { PathPoint, POI, RobotPose } from "@/types/ui";
 import { bakeGrid } from "./bake-grid";
 import { useCanvasViewport } from "./hooks/use-canvas-viewport";
 import { useRobotTrail } from "./hooks/use-robot-trail";
-import { PALETTE } from "./palette";
+import { canvasPalette, PALETTE } from "./palette";
 import { pixelsPerMeter, project, unproject } from "./projection";
 import { drawEmptyState } from "./renderers/empty-state";
 import { drawGridLines } from "./renderers/grid-lines";
@@ -45,6 +46,12 @@ export interface MapPlacement {
   onPlace: (pose: { x: number; y: number; yaw: number }) => void;
 }
 
+/**
+ * "operator": every overlay (zoom, compass) and technical POI tooltips.
+ * "display": visitor-friendly, only the scale bar and POI names.
+ */
+export type MapVariant = "operator" | "display";
+
 export interface OccupancyCanvasProps {
   grid: OccupancyGrid | null;
   pose: RobotPose | null;
@@ -66,6 +73,7 @@ export interface OccupancyCanvasProps {
   onMapClick?: (world: { x: number; y: number }) => void;
   /** Fires when user clicks on an existing POI. */
   onPoiClick?: (poi: POI) => void;
+  variant?: MapVariant;
   className?: string;
   style?: CSSProperties;
 }
@@ -107,6 +115,7 @@ export function OccupancyCanvas({
   placement,
   onMapClick,
   onPoiClick,
+  variant = "operator",
   className,
   style,
 }: OccupancyCanvasProps) {
@@ -124,8 +133,12 @@ export function OccupancyCanvas({
   const trail = useRobotTrail(pose);
   const placing = placement?.active === true;
 
-  // Bake grid only when it actually changes (object identity).
-  const bakedGrid = useMemo(() => (grid ? bakeGrid(grid) : null), [grid]);
+  // Bake grid only when it (object identity) or the theme changes.
+  const theme = useThemeStore((s) => s.resolved);
+  const bakedGrid = useMemo(
+    () => (grid ? bakeGrid(grid, canvasPalette(theme)) : null),
+    [grid, theme],
+  );
 
   // Stash all render inputs in a ref so the rAF loop can always read the
   // latest without being a dependency. Updated every render.
@@ -147,6 +160,7 @@ export function OccupancyCanvas({
     visitors,
     route,
     placementPreview: drag,
+    variant,
   };
   const renderInputsRef = useRef(renderInputs);
   renderInputsRef.current = renderInputs;
@@ -302,7 +316,13 @@ export function OccupancyCanvas({
           display: "block",
           width: "100%",
           height: "100%",
-          cursor: placing ? "copy" : vp.isPanning ? "grabbing" : "crosshair",
+          cursor: placing
+            ? "copy"
+            : vp.isPanning
+              ? "grabbing"
+              : variant === "display"
+                ? "grab"
+                : "crosshair",
           touchAction: "none",
         }}
         aria-label="Robot map"
@@ -329,6 +349,7 @@ interface RenderInputs {
   visitors: ReadonlyArray<{ x: number; y: number; confidence: number }>;
   route: MapRoute | null;
   placementPreview: { x: number; y: number; yaw: number } | null;
+  variant: MapVariant;
 }
 
 /** Module-scope render function — pure relative to its inputs. */
@@ -355,6 +376,7 @@ function renderFrame(
     visitors,
     route,
     placementPreview,
+    variant,
   } = inp;
 
   if (cW === 0 || cH === 0) return;
@@ -404,13 +426,27 @@ function renderFrame(
     drawPlacement(ctx, placementPreview, grid, viewport, cW, cH);
   }
 
-  drawZoomBadge(ctx, viewport);
+  const display = variant === "display";
+  if (!display) drawZoomBadge(ctx, viewport);
   drawScaleBar(ctx, grid, viewport, cW, cH);
-  drawCompass(ctx, cW);
+  if (!display) drawCompass(ctx, cW);
 
   if (hoverPoiId && hoverPos) {
     const poi = pois.find((p) => p.id === hoverPoiId);
-    if (poi) {
+    if (poi && display) {
+      drawTooltip(
+        ctx,
+        hoverPos.x,
+        hoverPos.y,
+        poi.description
+          ? [
+              { label: "", value: poi.name },
+              { label: "", value: poi.description.slice(0, 48) },
+            ]
+          : [{ label: "", value: poi.name }],
+        cW,
+      );
+    } else if (poi) {
       drawTooltip(
         ctx,
         hoverPos.x,

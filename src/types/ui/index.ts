@@ -1,4 +1,5 @@
 export * from "./activity";
+export * from "./brand";
 export * from "./connection";
 export * from "./interaction";
 export * from "./navigation";
@@ -7,4 +8,5 @@ export * from "./robot";
 export * from "./robot-api";
 export * from "./site";
 export * from "./system";
+export * from "./theme";
 export * from "./tour";

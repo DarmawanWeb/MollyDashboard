@@ -45,10 +45,7 @@ export function drawPois(
     if (isActive || isHover) {
       const haloR = isActive ? 16 : 12;
       const grad = ctx.createRadialGradient(px, py, 4, px, py, haloR);
-      grad.addColorStop(
-        0,
-        isActive ? "rgba(34,211,238,0.35)" : "rgba(168,85,247,0.30)",
-      );
+      grad.addColorStop(0, isActive ? PALETTE.robotGlow : PALETTE.poiHalo);
       grad.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -105,18 +102,18 @@ function drawPoiLabel(
   cx: number,
   topY: number,
 ): void {
-  ctx.font = canvasFont(11);
-  const padX = 6;
+  ctx.font = canvasFont(11, 600, "sans");
+  const padX = 7;
   const metrics = ctx.measureText(text);
   const w = metrics.width + padX * 2;
-  const h = 16;
+  const h = 18;
   const x = cx - w / 2;
   const y = topY;
 
   ctx.fillStyle = PALETTE.overlay;
   ctx.strokeStyle = PALETTE.overlayBorder;
   ctx.lineWidth = 1;
-  roundRect(ctx, x, y, w, h, 3);
+  roundRect(ctx, x, y, w, h, 6);
   ctx.fill();
   ctx.stroke();
 

@@ -40,7 +40,7 @@ export function MollySwitch({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        "relative inline-flex shrink-0 cursor-pointer items-center",
+        "relative inline-flex shrink-0 cursor-pointer items-center rounded-full",
         "border transition-colors outline-none",
         "focus-visible:border-cyan",
         "data-checked:bg-cyan data-checked:border-cyan",
@@ -53,7 +53,7 @@ export function MollySwitch({
     >
       <BaseSwitch.Thumb
         className={cn(
-          "block transition-transform",
+          "block rounded-full transition-transform",
           "translate-x-0.5",
           thumbSize,
           thumbTranslate,

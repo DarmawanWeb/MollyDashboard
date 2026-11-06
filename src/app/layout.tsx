@@ -1,14 +1,25 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/jetbrains-mono";
-import "@fontsource/ibm-plex-sans/400.css";
-import "@fontsource/ibm-plex-sans/500.css";
-import "@fontsource/ibm-plex-sans/600.css";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { BRAND } from "@/constants/brand";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "Molly Dashboard",
-  description:
-    "Operator console for the Molly tour guide robot — Deep Robotics Lite3 · ROS 2 Humble",
+  title: {
+    default: `${BRAND.robot} — ${BRAND.tagline.en}`,
+    template: `%s · ${BRAND.robot}`,
+  },
+  description: `${BRAND.robot}, the ${BRAND.tagline.en.toLowerCase()} by ${BRAND.maker.name} at ${BRAND.partner.name}.`,
+  applicationName: `${BRAND.robot} Dashboard`,
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f5fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#070b14" },
+  ],
 };
 
 export default function RootLayout({
@@ -17,8 +28,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="font-mono dark" suppressHydrationWarning>
-      <body>{children}</body>
+    <html lang="id" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static, first-party theme bootstrap; must run before paint
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
+      </head>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

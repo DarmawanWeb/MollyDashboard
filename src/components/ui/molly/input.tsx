@@ -31,7 +31,7 @@ export function MollyInput({
       type={type}
       aria-invalid={invalid || undefined}
       className={cn(
-        "font-mono bg-mol-primary border text-txt-primary outline-none transition-colors",
+        "rounded-lg bg-mol-secondary border text-txt-primary outline-none transition-colors",
         "placeholder:text-txt-muted",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         "focus:border-cyan",

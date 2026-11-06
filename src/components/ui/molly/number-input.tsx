@@ -67,7 +67,7 @@ export function MollyNumberInput({
   return (
     <div
       className={cn(
-        "flex items-stretch border bg-mol-primary",
+        "flex items-stretch overflow-hidden rounded-lg border bg-mol-secondary",
         "focus-within:border-cyan transition-colors",
         invalid
           ? "border-red focus-within:border-red"

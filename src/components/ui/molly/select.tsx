@@ -88,7 +88,7 @@ export function MollySelect<TValue extends string = string>({
         aria-invalid={invalid || undefined}
         className={cn(
           "group/select inline-flex w-full items-center justify-between gap-2",
-          "font-mono bg-mol-primary border text-txt-primary outline-none transition-colors",
+          "rounded-lg bg-mol-secondary border text-txt-primary outline-none transition-colors",
           "focus:border-cyan",
           "data-popup-open:border-cyan",
           "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -136,8 +136,8 @@ export function MollySelect<TValue extends string = string>({
           <BaseSelect.Popup
             className={cn(
               "w-[var(--anchor-width)] min-w-[8rem]",
-              "bg-mol-secondary border border-border shadow-xl",
-              "font-mono outline-none",
+              "overflow-hidden rounded-xl bg-mol-secondary border border-border shadow-card-lg",
+              "outline-none",
               "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
               "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
               "data-[side=top]:slide-in-from-bottom-1",

@@ -29,7 +29,7 @@ export const MollyTextarea = forwardRef<HTMLTextAreaElement, Props>(
         ref={ref}
         rows={rows}
         className={cn(
-          "font-mono bg-mol-primary border text-txt-primary outline-none transition-colors resize-y min-h-16",
+          "rounded-lg bg-mol-secondary border text-txt-primary outline-none transition-colors resize-y min-h-16",
           "placeholder:text-txt-muted",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "focus:border-cyan",

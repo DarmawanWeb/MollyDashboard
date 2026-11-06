@@ -22,9 +22,10 @@ export function CanvasSkeleton({ label = "Loading map…" }: { label?: string })
     >
       <div
         aria-hidden
-        className="absolute inset-0 opacity-[0.03] bg-repeat"
+        className="absolute inset-0 opacity-[0.08] bg-repeat"
         style={{
-          backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
+          backgroundImage:
+            "radial-gradient(circle, var(--txt-muted) 1px, transparent 1px)",
           backgroundSize: "24px 24px",
         }}
       />

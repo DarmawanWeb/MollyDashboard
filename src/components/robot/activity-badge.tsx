@@ -12,7 +12,7 @@ export function ActivityBadge({ className }: { className?: string }) {
     <div
       aria-live="polite"
       className={cn(
-        "flex items-center gap-2 border px-2.5 py-1",
+        "flex items-center gap-2 rounded-full border px-2.5 py-1",
         activity.bgClass,
         activity.borderClass,
         className,
@@ -21,13 +21,11 @@ export function ActivityBadge({ className }: { className?: string }) {
       <div
         aria-hidden
         className={cn(
-          "h-2 w-2 motion-safe:animate-pulse-dot",
+          "h-2 w-2 rounded-full motion-safe:animate-pulse-dot",
           activity.dotClass,
         )}
       />
-      <span
-        className={cn("font-mono text-xs font-semibold", activity.textClass)}
-      >
+      <span className={cn("text-xs font-semibold", activity.textClass)}>
         {activity.label}
       </span>
     </div>

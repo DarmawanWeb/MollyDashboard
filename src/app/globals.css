@@ -1,74 +1,195 @@
 @import "tailwindcss";
 
+/* `dark:` follows the theme the dashboard picked (html[data-theme]), not only the OS. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ============================================================================
- * Design Tokens — Molly Dashboard
+ * Design tokens — Molly Dashboard
+ *
+ * Every color is a CSS variable with a light and a dark value; the Tailwind
+ * names below (bg-mol-secondary, text-txt-primary, text-cyan, …) point at
+ * them, so components never pick a theme themselves. The theme lives on
+ * <html data-theme="light|dark">, set before the first paint (layout.tsx).
  * ========================================================================= */
 
-@theme {
-  /* Surfaces */
-  --color-mol-root: #0a0a0a;
-  --color-mol-primary: #111111;
-  --color-mol-secondary: #1a1a1a;
-  --color-mol-tertiary: #262626;
-  --color-mol-elevated: #2e2e2e;
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces: page → chrome → card → inset → raised */
+  --mol-root: #f3f5fa;
+  --mol-primary: #ffffff;
+  --mol-secondary: #ffffff;
+  --mol-tertiary: #f1f4f9;
+  --mol-elevated: #e7ecf4;
 
   /* Text */
-  --color-txt-primary: #ffffff;
-  --color-txt-secondary: #a3a3a3;
-  --color-txt-tertiary: #737373;
-  --color-txt-muted: #525252;
+  --txt-primary: #0b1324;
+  --txt-secondary: #3d4a63;
+  --txt-tertiary: #5f6c84;
+  --txt-muted: #8a96ab;
 
   /* Borders */
-  --color-border-subtle: #262626;
-  --color-border: #3a3a3a;
-  --color-border-strong: #4a4a4a;
+  --border-subtle: #e5e9f2;
+  --border: #d5dce8;
+  --border-strong: #b9c3d4;
+
+  /* Accents (the -light variants are the hover shade) */
+  --cyan: #0891b2;
+  --cyan-light: #0e7490;
+  --violet: #7c3aed;
+  --violet-light: #6d28d9;
+  --orange: #ea580c;
+  --orange-light: #c2410c;
+  --amber: #d97706;
+  --amber-light: #b45309;
+  --green: #059669;
+  --green-light: #047857;
+  --red: #dc2626;
+  --red-light: #b91c1c;
+
+  /* Brand gradient (Molly) */
+  --brand: #4f46e5;
+  --brand-2: #0891b2;
+  --on-brand: #ffffff;
+
+  /* Depth */
+  --card-shadow:
+    0 1px 2px rgb(16 24 40 / 0.04), 0 12px 32px -18px rgb(16 24 40 / 0.18);
+  --card-shadow-lg:
+    0 2px 4px rgb(16 24 40 / 0.04), 0 24px 48px -24px rgb(16 24 40 / 0.28);
+  --card-highlight: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --glow-1: rgb(79 70 229 / 0.1);
+  --glow-2: rgb(8 145 178 / 0.1);
+  --glow-3: rgb(217 119 6 / 0.06);
+  --logo-plate: #ffffff;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --mol-root: #070b14;
+  --mol-primary: #0a1020;
+  --mol-secondary: #0f1626;
+  --mol-tertiary: #151e33;
+  --mol-elevated: #1d2740;
+
+  --txt-primary: #f3f6fc;
+  --txt-secondary: #b4bed0;
+  --txt-tertiary: #8390a8;
+  --txt-muted: #5b6780;
+
+  --border-subtle: #1a2338;
+  --border: #26324b;
+  --border-strong: #34425f;
+
+  --cyan: #22d3ee;
+  --cyan-light: #67e8f9;
+  --violet: #a78bfa;
+  --violet-light: #c4b5fd;
+  --orange: #fb923c;
+  --orange-light: #fdba74;
+  --amber: #fbbf24;
+  --amber-light: #fcd34d;
+  --green: #34d399;
+  --green-light: #6ee7b7;
+  --red: #f87171;
+  --red-light: #fca5a5;
+
+  --brand: #7c7cf8;
+  --brand-2: #22d3ee;
+  --on-brand: #ffffff;
+
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -24px rgb(0 0 0 / 0.7);
+  --card-shadow-lg:
+    0 2px 6px rgb(0 0 0 / 0.35), 0 28px 56px -28px rgb(0 0 0 / 0.85);
+  --card-highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --glow-1: rgb(124 124 248 / 0.14);
+  --glow-2: rgb(34 211 238 / 0.1);
+  --glow-3: rgb(251 191 36 / 0.05);
+  --logo-plate: #ffffff;
+}
+
+@theme inline {
+  /* Surfaces */
+  --color-mol-root: var(--mol-root);
+  --color-mol-primary: var(--mol-primary);
+  --color-mol-secondary: var(--mol-secondary);
+  --color-mol-tertiary: var(--mol-tertiary);
+  --color-mol-elevated: var(--mol-elevated);
+
+  /* Text */
+  --color-txt-primary: var(--txt-primary);
+  --color-txt-secondary: var(--txt-secondary);
+  --color-txt-tertiary: var(--txt-tertiary);
+  --color-txt-muted: var(--txt-muted);
+
+  /* Borders */
+  --color-border-subtle: var(--border-subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
 
   /* Accents */
-  --color-cyan: #22d3ee;
-  --color-cyan-light: #67e8f9;
-  --color-violet: #a855f7;
-  --color-violet-light: #c084fc;
-  --color-orange: #f97316;
-  --color-orange-light: #fb923c;
-  --color-amber: #f59e0b;
-  --color-amber-light: #fbbf24;
-  --color-green: #22c55e;
-  --color-green-light: #4ade80;
-  --color-red: #ef4444;
-  --color-red-light: #f87171;
+  --color-cyan: var(--cyan);
+  --color-cyan-light: var(--cyan-light);
+  --color-violet: var(--violet);
+  --color-violet-light: var(--violet-light);
+  --color-orange: var(--orange);
+  --color-orange-light: var(--orange-light);
+  --color-amber: var(--amber);
+  --color-amber-light: var(--amber-light);
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-red: var(--red);
+  --color-red-light: var(--red-light);
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-on-brand: var(--on-brand);
+  --color-logo-plate: var(--logo-plate);
 
-  /* Shadcn semantic mapping (so Base UI components match Molly aesthetic) */
-  --color-background: var(--color-mol-root);
-  --color-foreground: var(--color-txt-primary);
-  --color-card: var(--color-mol-secondary);
-  --color-card-foreground: var(--color-txt-primary);
-  --color-popover: var(--color-mol-secondary);
-  --color-popover-foreground: var(--color-txt-primary);
-  --color-primary: var(--color-cyan);
-  --color-primary-foreground: var(--color-mol-root);
-  --color-secondary: var(--color-mol-tertiary);
-  --color-secondary-foreground: var(--color-txt-primary);
-  --color-muted: var(--color-mol-secondary);
-  --color-muted-foreground: var(--color-txt-tertiary);
-  --color-accent: var(--color-mol-tertiary);
-  --color-accent-foreground: var(--color-txt-primary);
-  --color-destructive: var(--color-red);
-  --color-destructive-foreground: var(--color-txt-primary);
-  --color-input: var(--color-border-subtle);
-  --color-ring: var(--color-cyan);
+  /* Semantic names used by Base UI components */
+  --color-background: var(--mol-root);
+  --color-foreground: var(--txt-primary);
+  --color-card: var(--mol-secondary);
+  --color-card-foreground: var(--txt-primary);
+  --color-popover: var(--mol-secondary);
+  --color-popover-foreground: var(--txt-primary);
+  --color-primary: var(--cyan);
+  --color-primary-foreground: var(--mol-root);
+  --color-secondary: var(--mol-tertiary);
+  --color-secondary-foreground: var(--txt-primary);
+  --color-muted: var(--mol-tertiary);
+  --color-muted-foreground: var(--txt-tertiary);
+  --color-accent: var(--mol-tertiary);
+  --color-accent-foreground: var(--txt-primary);
+  --color-destructive: var(--red);
+  --color-destructive-foreground: var(--txt-primary);
+  --color-input: var(--border-subtle);
+  --color-ring: var(--cyan);
 
-  /* Radius — Molly uses sharp/industrial aesthetic */
-  --radius: 0.125rem;
+  /* Depth */
+  --shadow-card: var(--card-shadow);
+  --shadow-card-lg: var(--card-shadow-lg);
+}
 
+@theme {
   /* Typography */
-  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
-  --font-sans: "IBM Plex Sans", sans-serif;
+  --font-sans:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
+  --font-mono:
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
   /* Animations */
   --animate-pulse-dot: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-scan-line: scan-line 8s linear infinite;
   --animate-fade-in: fade-in 200ms ease-out;
+  --animate-rise-in: rise-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-ping-soft: ping-soft 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-float: float 5s ease-in-out infinite;
+  --animate-eq: eq 0.9s ease-in-out infinite;
+  --animate-dots: dots 1.2s ease-in-out infinite;
 }
 
 /* ============================================================================
@@ -105,9 +226,65 @@
   }
 }
 
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+@keyframes ping-soft {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  80%,
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes dots {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
   }
 }
 
@@ -121,25 +298,32 @@
   }
 
   html {
-    @apply font-mono;
-    color-scheme: dark;
+    @apply font-sans;
+  }
+
+  /* The visitor display scales with the screen it runs on (rem-based). */
+  html:has([data-surface="display"]) {
+    font-size: clamp(14px, 0.52vw + 8px, 20px);
   }
 
   body {
-    @apply font-sans antialiased overflow-hidden bg-mol-root text-txt-primary;
+    @apply font-sans antialiased bg-mol-root text-txt-primary;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
   }
 
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-mol-root;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-border;
+    @apply bg-border rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -148,45 +332,29 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-border) var(--color-mol-root);
-  }
-
-  select,
-  input,
-  textarea,
-  option {
-    color-scheme: dark;
+    scrollbar-color: var(--border) transparent;
   }
 
   ::selection {
-    background-color: var(--color-cyan);
-    color: var(--color-mol-root);
+    background-color: var(--brand);
+    color: var(--on-brand);
   }
 
   :focus-visible {
-    outline: 1px solid var(--color-cyan);
-    outline-offset: 1px;
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 
   /*
    * Reduced motion — respects the operating-system "reduce motion" setting.
-   *
-   * Disables pulses, shimmers, scans, and other looping animations across
-   * the entire component tree. Fades and one-shot transitions still play
-   * (they're brief and informative).
-   *
-   * `!important` is intentional here: the rules must beat every
-   * component-level animation/transition declaration, including those set
-   * inline by libraries (Base UI, Tailwind's `animate-*` utilities, etc.).
-   * Without it, a more specific selector elsewhere would override the
-   * accessibility preference.
+   * `!important` must beat every component-level animation declaration,
+   * including those set inline by libraries.
    */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
-      /* biome-ignore lint/complexity/noImportantStyles: required to beat all
-         component-level animation declarations for a11y override */
+      /* biome-ignore lint/complexity/noImportantStyles: a11y override must win */
       animation-duration: 0.001ms !important;
       /* biome-ignore lint/complexity/noImportantStyles: see above */
       animation-iteration-count: 1 !important;
@@ -202,20 +370,20 @@
 
 @layer components {
   .panel {
-    @apply bg-mol-secondary border border-border-subtle;
+    @apply bg-mol-secondary border border-border-subtle rounded-xl shadow-card;
   }
 
   .panel-inset {
-    @apply bg-mol-primary border border-border-subtle;
+    @apply bg-mol-tertiary border border-border-subtle rounded-lg;
   }
 
   .label {
-    @apply text-[10px] font-semibold text-txt-tertiary uppercase tracking-widest font-mono;
+    @apply text-[10px] font-semibold text-txt-tertiary uppercase tracking-widest;
   }
 
   .btn {
-    @apply font-mono text-xs font-semibold px-4 py-2 border cursor-pointer
-           transition-all uppercase tracking-wider inline-flex items-center gap-1.5
+    @apply text-xs font-semibold px-4 py-2 border rounded-lg cursor-pointer
+           transition-all inline-flex items-center gap-1.5
            disabled:cursor-not-allowed disabled:opacity-50;
   }
 
@@ -236,7 +404,7 @@
   }
 
   .input-base {
-    @apply font-mono bg-mol-primary border border-border-subtle text-txt-primary
+    @apply bg-mol-secondary border border-border text-txt-primary rounded-lg
            text-sm px-3 py-2 outline-none transition-colors
            focus:border-cyan
            placeholder:text-txt-muted
@@ -247,13 +415,38 @@
     @apply bg-mol-secondary text-txt-primary;
   }
 
+  /* Visitor display card */
+  .display-card {
+    @apply relative bg-mol-secondary border border-border-subtle rounded-3xl;
+    box-shadow: var(--card-highlight), var(--card-shadow);
+  }
+
+  /* Soft brand glows behind the visitor display */
+  .display-backdrop {
+    background-color: var(--mol-root);
+    background-image:
+      radial-gradient(60rem 40rem at 0% 0%, var(--glow-1), transparent 60%),
+      radial-gradient(50rem 36rem at 100% 0%, var(--glow-2), transparent 60%),
+      radial-gradient(60rem 40rem at 50% 110%, var(--glow-3), transparent 60%);
+  }
+
+  .text-gradient-brand {
+    background-image: linear-gradient(100deg, var(--brand), var(--brand-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-gradient-brand {
+    background-image: linear-gradient(120deg, var(--brand), var(--brand-2));
+  }
+
   /*
    * Skip-link — visually hidden until focused. Keyboard users tab into it
    * first thing on page load and can jump past the chrome to main content.
-   * Screen readers always announce it.
    */
   .skip-link {
-    @apply absolute left-2 top-2 z-50 px-3 py-1.5 font-mono text-xs font-semibold
+    @apply absolute left-2 top-2 z-50 px-3 py-1.5 text-xs font-semibold rounded-md
            bg-cyan text-mol-root border border-cyan
            -translate-y-20 focus:translate-y-0
            transition-transform;

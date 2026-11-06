@@ -51,7 +51,7 @@ export function EstopButton() {
             void engage();
           }
         }}
-        className="flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider transition-all active:scale-95 select-none border-red/30 bg-red/10 text-red hover:bg-red/20"
+        className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all active:scale-95 select-none border-red/30 bg-red/10 text-red hover:bg-red/20"
       >
         <OctagonX size={14} />
         E-STOP
@@ -65,7 +65,7 @@ export function EstopButton() {
       {...release.handlers}
       title={reason ? `Engaged: ${reason}` : "Engaged"}
       className={cn(
-        "relative overflow-hidden flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider select-none touch-none",
+        "relative overflow-hidden flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider select-none touch-none",
         "border-red bg-red text-white",
         release.progress === 0 && "motion-safe:animate-pulse",
       )}

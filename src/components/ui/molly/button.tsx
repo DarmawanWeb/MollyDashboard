@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 const buttonVariants = cva(
   cn(
     "inline-flex items-center justify-center gap-1.5",
-    "font-mono font-semibold uppercase tracking-wider",
+    "rounded-lg font-semibold",
     "border cursor-pointer transition-colors outline-none",
     "focus-visible:border-cyan",
     "disabled:cursor-not-allowed disabled:opacity-50",

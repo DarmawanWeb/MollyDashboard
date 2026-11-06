@@ -54,7 +54,7 @@ export function CameraFeed({
         />
       ) : (
         <>
-          <div className="absolute inset-0 opacity-[0.03] bg-repeat-y animate-scan-line bg-[repeating-linear-gradient(0deg,#fff_0px,transparent_1px,transparent_3px)]" />
+          <div className="absolute inset-0 opacity-[0.03] bg-repeat-y animate-scan-line bg-[repeating-linear-gradient(0deg,var(--txt-primary)_0px,transparent_1px,transparent_3px)]" />
           <div className="flex flex-col items-center justify-center w-full h-full text-center gap-1">
             {failed ? (
               <VideoOff size={20} className="text-txt-muted" />
@@ -87,13 +87,13 @@ export function CameraFeed({
         <div
           className={cn(
             "w-1.5 h-1.5 rounded-full",
-            live ? "bg-green-500" : "bg-txt-muted",
+            live ? "bg-green" : "bg-txt-muted",
           )}
         />
         <span
           className={cn(
             "font-mono text-[10px]",
-            live ? "text-green-500" : "text-txt-muted",
+            live ? "text-green" : "text-txt-muted",
           )}
         >
           {live ? "LIVE" : "OFF"}

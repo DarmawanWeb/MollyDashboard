@@ -94,7 +94,7 @@ export function RobotMap({
       />
 
       <div className="absolute bottom-3 right-3 flex items-center gap-2 font-mono text-[10px] text-txt-muted pointer-events-none">
-        {mapping && <span className="text-blue-300">● mapping</span>}
+        {mapping && <span className="text-violet">● mapping</span>}
         <span>
           {pose
             ? `${pose.x.toFixed(2)}, ${pose.y.toFixed(2)} m · ${Math.round((pose.yaw * 180) / Math.PI)}°`
