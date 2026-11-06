@@ -7,27 +7,35 @@ High-level map of the dashboard's modules and how data flows between them.
 ```
 src/
 ├── app/                      Next.js App Router routes
-│   ├── (dashboard)/
-│   │   ├── layout.tsx        AppProviders + chrome + ToastViewport
-│   │   ├── monitor/          tour, walk-to, speech, visitors, conversation
-│   │   ├── control/          AUTO / REMOTE, drive pad, robot actions
+│   ├── (display)/            `/`: the visitor display (AppProviders + Showcase)
+│   ├── (dashboard)/          operator pages
+│   │   ├── layout.tsx        OperatorShell (providers, header, footer, toasts)
+│   │   ├── monitor/          tour, walk-to, speech, visitors, Ask Molly
 │   │   ├── mapping/          sites, mapping, localization, POI + tour editors
 │   │   ├── system/           health, nodes, /rosout logs
-│   │   └── settings/         connection, camera, motion, interaction
-│   ├── globals.css           Tailwind + design tokens + reduced-motion
-│   └── layout.tsx            Root HTML, self-hosted fonts
+│   │   └── settings/         connection, AI assistant, camera, motion, speech, theme
+│   ├── api/
+│   │   ├── chat/             LLM gateway: status (GET), ask + stream (POST)
+│   │   └── conversations/    shared conversation history
+│   ├── globals.css           Tailwind + light / dark tokens + reduced-motion
+│   └── layout.tsx            Root HTML, fonts, theme init script, ThemeProvider
 │
 ├── components/
+│   ├── brand/                CompanyLogo, PartnerLockup, Credits
+│   ├── display/              visitor display: Showcase, header, hero camera + captions,
+│   │                         stat tiles, tour journey, location map, chat + history,
+│   │                         daily stats tracker, demo autopilot
 │   ├── error/                ErrorBoundary, RouteError
 │   ├── feedback/             Toast viewport, ConnectionBanner
-│   ├── layout/               Header (tabs, e-stop), Footer, AppSidebar, AppSection
-│   ├── map/                  OccupancyCanvas, RobotMap + renderers (pure) + hooks
-│   ├── providers/            Connection, Simulation, RosSync, TourController
+│   ├── layout/               OperatorShell, Header (tabs, e-stop), Footer, AppSidebar, AppSection
+│   ├── map/                  OccupancyCanvas, RobotMap + renderers (pure) + palettes + hooks
+│   ├── providers/            Theme, Connection, Simulation, RosSync, TourController, Conversation
 │   ├── robot/                ActivityBadge, CameraFeed, Stat
 │   ├── skeleton/             Loading placeholders
-│   └── ui/molly/             Industrial form primitives (Button, ConfirmButton, Field, …)
+│   ├── theme/                ThemeToggle, ThemeSwitcher
+│   └── ui/molly/             Form primitives (Button, ConfirmButton, Field, …)
 │
-├── constants/                Tabs, activity styles, gestures, robot actions
+├── constants/                Brand, tabs, activity styles, gestures
 │
 ├── hooks/
 │   ├── use-robot-api         RobotApi for the current mode (live or mock)
@@ -35,7 +43,12 @@ src/
 │   ├── use-ros-sync          robot topics → domain stores (live)
 │   ├── use-mock-sync         mock robot → domain stores (offline)
 │   ├── use-tour-controller   tour commands + optimistic FSM
-│   ├── use-teleop            hold-to-drive on /bridge/remote_cmd_vel
+│   ├── use-assistant         ask Molly: LLM gateway or the robot, speak, history
+│   ├── use-conversation-sync history load + poll, LLM status
+│   ├── use-robot-story       what Molly is doing, in visitor terms
+│   ├── use-display-mode      live / demo / offline for the display
+│   ├── use-caption           live caption of what Molly says
+│   ├── use-theme             light / dark / system
 │   ├── use-ros-map           /map with the mock grid offline
 │   ├── use-hydrated          false while server HTML hydrates
 │   ├── use-draft             local edit of a stored value
@@ -55,10 +68,21 @@ src/
 │   ├── site/                 POI, tour, site and mapping codecs, ids
 │   ├── navigation/           planner, follower and path codecs
 │   ├── interaction/          speech, greeter, conversation, visitors
+│   ├── conversation/         chat API client, live context, text helpers
+│   ├── display/              visitor copy (id / en), robot story
 │   ├── system/               health JSON, /rosout entries
 │   ├── tour/                 FSM pure logic + wire codec
 │   ├── map/                  frame helpers (base_link → map)
+│   ├── theme.ts              theme storage, resolve, no-flash init script
 │   └── utils.ts              cn() (clsx + tailwind-merge)
+│
+├── server/                   Server only (route handlers, server components)
+│   ├── assistant/            LLM config, prompt builder, OpenAI-compatible client,
+│   │                         <think> filter
+│   ├── conversations.ts      history in $DATA_DIR/conversations.jsonl
+│   ├── brand.ts              which logo files are in public/brand/
+│   ├── validate.ts           request checks and clipping
+│   └── request.ts            client address, rate limiter
 │
 ├── mocks/                    In-memory robot for offline use
 │   ├── mock-robot.ts         RobotApi + simulated state (walk, speech, visitors…)
@@ -69,10 +93,14 @@ src/
 │   ├── use-robot-store       connection, pose, localization, battery, Lite3, control
 │   ├── use-site-store        site, mapping, POIs, tours
 │   ├── use-navigation-store  planner, path, follower
-│   ├── use-interaction-store speech, greeter, conversation, visitors
+│   ├── use-interaction-store speech, greeter, visitors
+│   ├── use-conversation-store chat entries mirrored from the server + LLM status
 │   ├── use-system-store      health, logs
 │   ├── use-tour-store        tour state mirror
 │   ├── use-toast-store       toasts
+│   ├── use-theme-store       light / dark
+│   ├── use-display-store     display language, spoken answers (persisted)
+│   ├── use-daily-stats-store today's tours and distance (persisted)
 │   └── use-settings-store    (persisted to localStorage, versioned)
 │
 └── types/
@@ -87,6 +115,7 @@ app/         ← can import anything
 components/  ← components, constants, hooks, lib, stores, types
 hooks/       ← lib, stores, types, mocks
 lib/         ← types only (and other lib/* modules, no cycles)
+server/      ← lib, constants, types (never imported by client code)
 mocks/       ← lib, types
 stores/      ← types
 constants/   ← types
@@ -94,19 +123,30 @@ types/       ← nothing (leaves)
 ```
 
 **Invariant**: `lib/*` never imports from `components/` or `app/`. Types never import from
-anywhere except other types. This keeps the dependency graph one-way and prevents cycles.
+anywhere except other types. `server/*` is imported only by route handlers and server
+components (the LLM key lives there). This keeps the dependency graph one-way and prevents
+cycles.
 
 ## Provider Tree
 
 ```
-DashboardLayout
-└─ AppProviders
-   └─ ConnectionProvider       opens rosbridge with the saved URL + namespace
-      └─ SimulationLayer       mock robot → stores while offline / USE_MOCKS
-         └─ RosSyncLayer       robot topics → stores while connected
-            └─ TourController  /tour/state + /tour/get_state, tour commands
+RootLayout                     theme init script (no flash), ThemeProvider
+├─ DisplayLayout (/)           AppProviders → Showcase
+└─ DashboardLayout             OperatorShell → AppProviders → header, page, footer
+
+AppProviders
+└─ ConnectionProvider          opens rosbridge with the saved URL + namespace
+   └─ SimulationLayer          mock robot → stores while offline / USE_MOCKS
+      └─ RosSyncLayer          robot topics → stores while connected
+         └─ TourController     /tour/state + /tour/get_state, tour commands
+            └─ ConversationLayer  history load + poll, LLM status
                └─ {children}   route content
 ```
+
+The visitor display reads the same stores but decides for itself what to show
+(`useDisplayMode`): `live` with a robot, `demo` on a `USE_MOCKS` build (with a demo autopilot
+that keeps tours running), and `offline` — a resting state instead of the mock robot the
+operator pages fall back to.
 
 Mock mode is `env.USE_MOCKS || connection !== "connected"`. The two sync layers are
 mutually exclusive: leaving mock mode clears every store so no mock value lingers next to
@@ -200,6 +240,27 @@ Settings are persisted and versioned (`migrate` keeps the URLs of older versions
 render their initial state while the server HTML hydrates, so values that seed local state
 go through `useDraft` (shows the stored value until the user edits) instead of
 `useState(stored)`.
+
+## Conversations
+
+```
+screen (display / monitor) ── useAssistant ──► POST /api/chat ──► LLM_API_URL
+   │                                              │ (prompt: persona, config/assistant.md,
+   │                                              │  live context, recent turns)
+   │◄──────────── streamed answer ◄───────────────┤ saved to the history
+   ├─ api.say(answer) → robot speaks
+robot (asked in person) ── /interaction/conversation ──► every screen ──► POST /api/conversations
+every screen ◄── GET /api/conversations?since= (4 s poll) ── shared history
+```
+
+See [ASSISTANT.md](ASSISTANT.md).
+
+## Theme
+
+`<html data-theme="light|dark">` is set by an inline script before the first paint (saved
+choice or the OS preference); every color is a CSS variable with both values, so components
+never branch on the theme. The map canvas cannot read CSS variables: `ThemeProvider` swaps the
+renderers' palette and the occupancy image is re-baked with the theme's colors.
 
 ## Why This Layout
 

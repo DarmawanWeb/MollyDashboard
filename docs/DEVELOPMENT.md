@@ -29,6 +29,10 @@ NEXT_PUBLIC_VIDEO_SERVER_URL=http://192.168.1.120:8080
 
 # Mock robot even when rosbridge is reachable. Defaults to true in dev.
 NEXT_PUBLIC_USE_MOCKS=false
+
+# Optional: an OpenAI-compatible LLM for "Ask Molly" (server side, see ASSISTANT.md)
+LLM_API_URL=http://localhost:11434/v1
+LLM_MODEL=llama3.2
 ```
 
 Then:
@@ -37,8 +41,9 @@ Then:
 pnpm dev
 ```
 
-Open `http://localhost:3010` (or `PORT=… pnpm dev`) — redirects to `/monitor`. The URLs and the robot namespace can
-also be changed in **Settings → Connection** without a rebuild.
+Open `http://localhost:3010` (or `PORT=… pnpm dev`) for the visitor display, `/monitor` for the
+operator pages. The URLs and the robot namespace can also be changed in **Settings →
+Connection** without a rebuild.
 
 ## Mock Robot
 
@@ -59,11 +64,23 @@ mock robot; once the socket opens, the stores are cleared and live data takes ov
 | Localization | localize from a tag, record tags |
 | Walking | go-to with a straight path, arrival heading, cancel; walking speed setting |
 | Tour | `mocks/tour-runner.ts`: navigating → performing_motion → narrating → dwelling, returning |
-| Interaction | speech with duration, stop, gestures, greeter, conversation answers, visitors |
-| Control | AUTO / REMOTE, e-stop, teleop moving the robot, stand / sit, gaits |
+| Interaction | speech with duration, stop, gestures, greeter, canned conversation answers, visitors |
+| Safety | software e-stop |
 | Telemetry | battery, IMU, Lite3 state, health, `/rosout`-like logs |
 
 The mock state lives in the page: a full reload starts from the seed again.
+
+On a `USE_MOCKS` build the visitor display also runs a **demo autopilot**: after a few idle
+seconds it starts the tour and speaks each stop's narration, so the captions, journey and map
+keep moving (a showroom demo through the tunnel). A production build without a robot shows
+"Molly is taking a break" instead; the operator pages still fall back to the mock robot.
+
+## Theme
+
+Light and dark are CSS variables in `src/app/globals.css` (`:root` / `[data-theme="dark"]`),
+mapped to Tailwind names in `@theme inline`; use the tokens (`bg-mol-secondary`,
+`text-txt-primary`, `text-cyan`, …), never raw palette classes, and both themes stay right.
+Canvas colors live in `src/components/map/palette.ts` (one set per theme).
 
 ## Common Commands
 
@@ -102,10 +119,20 @@ shows `connected` / `reconnecting` / `disconnected` and `mock` while the mock ro
 
 ```bash
 # On the robot:
-ros2 topic echo /bridge/remote_cmd_vel        # drive pad in REMOTE
 ros2 topic echo /tour/state                   # tour commands land here
 ros2 service call /tour/get_state molly_interfaces/srv/GetTourState
+ros2 topic echo /interaction/speech_status    # LLM answers being spoken
 ```
+
+### The LLM Gateway
+
+```bash
+curl -s localhost:3010/api/chat                # {"external":true,"model":…,"host":…}
+curl -s localhost:3010/api/conversations       # the shared history
+```
+
+Gateway errors (HTTP status of the LLM, timeouts) are logged by the server with an
+`[assistant]` prefix; the screen only shows a friendly sentence.
 
 For verbose tracing, set a breakpoint in `client.ts` `handleIncoming()`.
 
@@ -149,7 +176,7 @@ the singleton when the URL or namespace changes and the sync hooks re-subscribe.
      return <RouteError {...props} route="Name" />;
    }
    ```
-3. Add it to the navigation in `src/constants/tabs.ts`.
+3. Add it to the operator navigation in `src/constants/tabs.ts`.
 
 ## Performance Tips
 
@@ -172,7 +199,9 @@ Load a site on the Mapping page, or check `ros2 topic info /map` on the robot.
 the state is stuck in `STARTING`, the robot didn't answer within 3 s; check `/tour/control`
 on the robot.
 
-**Drive pad disabled** — switch to REMOTE on the Control page and release the e-stop.
+**Ask Molly says it cannot answer** — check `GET /api/chat` and the server log
+(`[assistant] LLM answered 401` is a wrong key, `LLM not reachable` a wrong URL). Without
+`LLM_API_URL` the robot answers, so the robot must be connected.
 
-**Toast not appearing** — `ToastViewport` is mounted in `DashboardLayout`; toasts called
-outside `/(dashboard)/` routes don't render.
+**Toast not appearing** — `ToastViewport` is mounted in the operator shell; the visitor
+display shows no toasts on purpose.

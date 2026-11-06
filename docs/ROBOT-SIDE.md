@@ -19,9 +19,9 @@ ros2 launch molly robot.launch.py web:=true
 | `web_video_server` | 8080 | camera MJPEG `/stream?topic=/camera/camera/color/image_raw&type=mjpeg` |
 
 rosbridge only exposes the names of the web contract (`molly_bridge/config/web_params.yaml`).
-The dashboard never publishes the driver's `/<robot>/cmd_vel`: teleop goes to
-`/bridge/remote_cmd_vel`, through the control mux (e-stop, speed envelope, protective field).
-Keep the web ports on the robot's own network.
+The dashboard never drives the robot: no `cmd_vel`, no teleop (that is the handheld remote's
+job); it sends goals, tour commands, speech and the software e-stop. Keep the web ports on the
+robot's own network.
 
 ## Robot Namespace
 
@@ -39,7 +39,7 @@ placeholder with the namespace from Settings.
 | `/mapping/status` | `MappingStatus` | mapping panel |
 | `/planner/status`, `/planner/path`, `/navigation/status` | `PlannerStatus`, `nav_msgs/msg/Path`, `NavigationStatus` | walk-to, path on the map |
 | `/tour/state` | `TourState` | tour control |
-| `/interaction/speech_status`, `/interaction/greeter`, `/interaction/conversation` | `SpeechStatus`, `String` (JSON), `String` (JSON) | speech, greeter, conversation |
+| `/interaction/speech_status`, `/interaction/greeter`, `/interaction/conversation` | `SpeechStatus`, `String` (JSON), `String` (JSON) | speech and live captions, greeter, conversations asked in person (stored in the shared history) |
 | `/perception/visitors` | `Visitors` | visitors on the map and panel |
 | `/bridge/mode`, `/bridge/estop_engaged`, `/bridge/estop_reason`, `/bridge/protective_field` | `String`, `Bool`, `String`, `String` | mode, e-stop, field |
 | `/health/status`, `/odometry/status` | `String` (JSON), `String` | system page, footer |
@@ -53,7 +53,6 @@ mapping, the path finder and visitors are `dharma_interfaces/msg/<Name>`.
 
 | Topic | Type | Use |
 |---|---|---|
-| `/bridge/remote_cmd_vel` | `geometry_msgs/msg/Twist` | hold-to-drive at 10 Hz, zero on release (REMOTE mode only) |
 | `/tour/cmd` | `TourCommand` | fallback when `/tour/control` does not answer |
 
 ## Services
@@ -66,15 +65,15 @@ mapping, the path finder and visitors are `dharma_interfaces/msg/<Name>`.
 | `/site/save_poi`, `/site/delete_poi`, `/site/save_tour`, `/site/delete_tour` | POI and tour editors |
 | `/planner/go_to`, `/planner/cancel` | walk to a POI |
 | `/tour/control`, `/tour/get_state` | tour commands, state on (re)connect |
-| `/interaction/say`, `/interaction/stop_speech`, `/interaction/gesture`, `/interaction/greet`, `/interaction/set_greeter`, `/interaction/ask` | speech, gestures, greeter, conversation |
-| `/bridge/set_mode`, `/bridge/estop` | AUTO / REMOTE, software e-stop |
-| `/{robot}/stand_up`, `/{robot}/sit_down`, `/{robot}/gait_slow`, `gait_medium`, `gait_fast` | robot actions (`std_srvs/srv/Trigger`) |
+| `/interaction/say`, `/interaction/stop_speech`, `/interaction/gesture`, `/interaction/greet`, `/interaction/set_greeter`, `/interaction/ask` | speech (also the LLM gateway's answers), gestures, greeter, conversation when no external LLM is configured |
+| `/bridge/estop` | software e-stop |
 | `/path_follower_node/get_parameters`, `/path_follower_node/set_parameters` | walking speed (`target_linear_velocity`) |
 | `/rosapi/nodes`, `/rosapi/topics` | system page |
 
-Registered but not used by a page yet: `/planner/plan` (path preview), `/navigation/pause`,
-`/interaction/say_text` (quick phrases go through `/interaction/say`) and
-`/{robot}/diagnostics`.
+Registered but not used by a page: `/planner/plan` (path preview), `/navigation/pause`,
+`/interaction/say_text` (quick phrases go through `/interaction/say`), `/{robot}/diagnostics`,
+and since the control page is gone `/bridge/remote_cmd_vel`, `/bridge/set_mode` and the
+`/{robot}/stand_up` … `gait_fast` triggers (the handheld remote uses them).
 
 ## Tour Authority
 
@@ -89,5 +88,5 @@ in 3 s the dashboard shows `ERROR`.
 ```bash
 ros2 topic echo /tour/state --once
 ros2 service call /tour/get_state molly_interfaces/srv/GetTourState
-ros2 topic echo /bridge/remote_cmd_vel     # while holding a drive key in REMOTE
+ros2 topic echo /interaction/speech_status    # what the display captions
 ```
