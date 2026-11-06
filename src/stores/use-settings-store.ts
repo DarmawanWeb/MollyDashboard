@@ -22,15 +22,6 @@ export interface VideoConfig {
   width: number;
 }
 
-export interface TeleopConfig {
-  /** m/s forward / backward */
-  linearVel: number;
-  /** m/s sideways */
-  lateralVel: number;
-  /** rad/s */
-  angularVel: number;
-}
-
 export interface InteractionConfig {
   /** Default speech / conversation language */
   language: Language;
@@ -41,12 +32,10 @@ export interface InteractionConfig {
 interface SettingsState {
   connection: ConnectionConfig;
   video: VideoConfig;
-  teleop: TeleopConfig;
   interaction: InteractionConfig;
 
   setConnection: (patch: Partial<ConnectionConfig>) => void;
   setVideo: (patch: Partial<VideoConfig>) => void;
-  setTeleop: (patch: Partial<TeleopConfig>) => void;
   setInteraction: (patch: Partial<InteractionConfig>) => void;
   reset: () => void;
 }
@@ -76,23 +65,18 @@ const DEFAULTS = {
     quality: 60,
     width: 960,
   },
-  teleop: {
-    linearVel: 0.3,
-    lateralVel: 0.2,
-    angularVel: 0.6,
-  },
   interaction: {
     language: "id" as Language,
     quickPhrases: DEFAULT_PHRASES,
   },
 } as const satisfies Pick<
   SettingsState,
-  "connection" | "video" | "teleop" | "interaction"
+  "connection" | "video" | "interaction"
 >;
 
 type PersistedSettings = Pick<
   SettingsState,
-  "connection" | "video" | "teleop" | "interaction"
+  "connection" | "video" | "interaction"
 >;
 
 /** Bring settings saved by an older dashboard version to the current schema. */
@@ -133,7 +117,6 @@ export const useSettingsStore = create<SettingsState>()(
       setConnection: (patch) =>
         set((s) => ({ connection: { ...s.connection, ...patch } })),
       setVideo: (patch) => set((s) => ({ video: { ...s.video, ...patch } })),
-      setTeleop: (patch) => set((s) => ({ teleop: { ...s.teleop, ...patch } })),
       setInteraction: (patch) =>
         set((s) => ({ interaction: { ...s.interaction, ...patch } })),
 
@@ -147,7 +130,6 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (s): PersistedSettings => ({
         connection: s.connection,
         video: s.video,
-        teleop: s.teleop,
         interaction: s.interaction,
       }),
     },

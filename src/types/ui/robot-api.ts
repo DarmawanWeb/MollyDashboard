@@ -7,7 +7,6 @@
  */
 
 import type { Language, POI } from "./poi";
-import type { ControlMode } from "./robot";
 import type { TourDefinition } from "./tour";
 
 export interface ActionResult {
@@ -58,12 +57,8 @@ export interface RobotApi {
     speak: boolean,
   ): Promise<ActionResult & { answer: string }>;
 
-  /* control */
-  setMode(mode: ControlMode): Promise<ActionResult>;
+  /* safety and motion */
   setEstop(engaged: boolean): Promise<ActionResult>;
-  robotCommand(name: string): Promise<ActionResult>;
-  /** Teleop velocity (body frame); only effective in remote mode. */
-  drive(vx: number, vy: number, wz: number): void;
   getWalkingSpeed(): Promise<number | null>;
   setWalkingSpeed(speed: number): Promise<ActionResult>;
 

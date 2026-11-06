@@ -236,7 +236,6 @@ function createMockRobot(): MockRobot {
   let speechId = 0;
   let walkingSpeed = WALK_SPEED;
   let speechTimer: ReturnType<typeof setTimeout> | null = null;
-  let remoteVel = { vx: 0, vy: 0, wz: 0, at: 0 };
   let clock = 0;
 
   const emit = () => {
@@ -379,19 +378,6 @@ function createMockRobot(): MockRobot {
       }
     } else if (moving && tourPoi) {
       moveTowards(tourPoi, dt);
-    } else if (
-      moving &&
-      state.control.mode === "remote" &&
-      clock - remoteVel.at < 0.5
-    ) {
-      const { x, y, yaw } = state.pose;
-      const c = Math.cos(yaw);
-      const s = Math.sin(yaw);
-      state.pose = {
-        x: x + (c * remoteVel.vx - s * remoteVel.vy) * dt,
-        y: y + (s * remoteVel.vx + c * remoteVel.vy) * dt,
-        yaw: yaw + remoteVel.wz * dt,
-      };
     }
 
     // telemetry jitter
@@ -633,10 +619,6 @@ function createMockRobot(): MockRobot {
       return { ...ok(""), answer: question ? answer : "" };
     },
 
-    setMode: async (mode) => {
-      update({ control: { ...state.control, mode } });
-      return later(ok(mode), 100);
-    },
     setEstop: async (engaged) => {
       update({
         control: {
@@ -650,26 +632,6 @@ function createMockRobot(): MockRobot {
             : state.planner,
       });
       return later(ok(engaged ? "e-stop engaged" : "e-stop released"), 100);
-    },
-    robotCommand: async (name) => {
-      if (name === "stand_up" || name === "sit_down") {
-        const standing = name === "stand_up";
-        update({
-          lite3: {
-            ...state.lite3,
-            standing,
-            basicState: standing ? "standing" : "sitting",
-          },
-        });
-      } else if (name.startsWith("gait_")) {
-        update({
-          lite3: { ...state.lite3, gait: `flat_${name.slice(5)}` },
-        });
-      }
-      return later(ok(name), 300);
-    },
-    drive: (vx, vy, wz) => {
-      remoteVel = { vx, vy, wz, at: clock };
     },
     getWalkingSpeed: () => later(walkingSpeed, 100),
     setWalkingSpeed: async (speed) => {

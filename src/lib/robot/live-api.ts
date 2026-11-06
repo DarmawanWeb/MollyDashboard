@@ -1,6 +1,6 @@
 /**
- * RobotApi over rosbridge: every action is a service call (or the teleop
- * publish) from the registry. Service failures resolve as
+ * RobotApi over rosbridge: every action is a service call from the
+ * registry. Service failures resolve as
  * `{ success: false, message }` instead of throwing, so callers only branch
  * on the result.
  */
@@ -14,19 +14,13 @@ import type {
   RobotApi,
   TourDefinition,
 } from "@/types/ui";
-import { makeTwist } from "../ros/codec";
 import {
   doubleParameter,
   numberValue,
   setParametersError,
 } from "../ros/params";
 import { getRos } from "../ros/singleton";
-import {
-  robotCommandService,
-  SERVICES,
-  type ServiceDef,
-  TOPICS,
-} from "../ros/topics";
+import { SERVICES, type ServiceDef } from "../ros/topics";
 import { decodePoi, decodeTour, encodePoi, encodeTour } from "../site/codec";
 
 /** Walking speed parameter of path_follower_node. */
@@ -165,14 +159,8 @@ export function createLiveApi(): RobotApi {
       }
     },
 
-    setMode: (mode) => result(ros().callService(SERVICES.SET_MODE, { mode })),
     setEstop: (engaged) =>
       result(ros().callService(SERVICES.ESTOP, { data: engaged })),
-    robotCommand: (name) =>
-      result(ros().callService(robotCommandService(name), {}, SLOW_MS)),
-    drive: (vx, vy, wz) => {
-      ros().publish(TOPICS.REMOTE_CMD_VEL, makeTwist(vx, vy, wz));
-    },
     getWalkingSpeed: async () => {
       try {
         const res = await ros().callService(SERVICES.FOLLOWER_GET_PARAMS, {

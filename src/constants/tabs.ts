@@ -1,15 +1,11 @@
-import { Eye, Gamepad2, Map as MapIcon, Monitor, Settings } from "lucide-react";
+import { Eye, Map as MapIcon, Monitor, Settings } from "lucide-react";
 
+/** Operator pages (the visitor display lives at /). */
 export const TABS = [
   {
     href: "/monitor",
     label: "Monitor",
     icon: Eye,
-  },
-  {
-    href: "/control",
-    label: "Control",
-    icon: Gamepad2,
   },
   {
     href: "/mapping",

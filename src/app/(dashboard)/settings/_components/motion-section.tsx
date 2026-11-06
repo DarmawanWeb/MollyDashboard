@@ -10,29 +10,20 @@ import {
 import { useRobotAction } from "@/hooks/use-robot-action";
 import { useRobotApi } from "@/hooks/use-robot-api";
 import { useRobotStore } from "@/stores/use-robot-store";
-import { useSettingsStore } from "@/stores/use-settings-store";
 import { SettingsSection } from "./settings-section";
 
 /** Indoor range with visitors around; the follower clamps on its side too. */
 const SPEED = { min: 0.1, max: 0.8, step: 0.05 };
 
-const LIMITS = {
-  linearVel: { label: "Forward / back", unit: "m/s", min: 0.05, max: 0.8 },
-  lateralVel: { label: "Sideways", unit: "m/s", min: 0.05, max: 0.5 },
-  angularVel: { label: "Turn", unit: "rad/s", min: 0.1, max: 1.5 },
-} as const;
-
 /**
- * How fast the robot moves: the path follower's walking speed (a ROS
- * parameter on the robot, /path_follower_node target_linear_velocity) and
- * the teleop limits of the drive pad (saved in this browser).
+ * How fast the robot walks on tours and walk-tos: the path follower's
+ * walking speed (a ROS parameter on the robot, /path_follower_node
+ * target_linear_velocity).
  */
 export function MotionSection() {
   const api = useRobotApi();
   const { run, busy } = useRobotAction();
   const epoch = useRobotStore((s) => s.rosEpoch);
-  const teleop = useSettingsStore((s) => s.teleop);
-  const setTeleop = useSettingsStore((s) => s.setTeleop);
 
   const [robotSpeed, setRobotSpeed] = useState<number | null>(null);
   const [draft, setDraft] = useState<number | null>(null);
@@ -112,38 +103,6 @@ export function MotionSection() {
             </MollyButton>
           </div>
         </MollyField>
-
-        <div className="flex flex-col gap-2">
-          <span className="label">Teleop limits (drive pad)</span>
-          {(Object.keys(LIMITS) as (keyof typeof LIMITS)[]).map((key) => {
-            const limit = LIMITS[key];
-            return (
-              <div key={key} className="flex items-center gap-3">
-                <label
-                  htmlFor={`teleop-${key}`}
-                  className="text-xs text-txt-secondary w-28 shrink-0"
-                >
-                  {limit.label}
-                </label>
-                <MollyNumberInput
-                  id={`teleop-${key}`}
-                  value={teleop[key]}
-                  onChange={(value) => setTeleop({ [key]: value })}
-                  min={limit.min}
-                  max={limit.max}
-                  step={0.05}
-                  precision={2}
-                  size="sm"
-                  title={`${limit.label} in ${limit.unit}`}
-                  className="flex-1"
-                />
-                <span className="font-mono text-[10px] text-txt-muted w-10">
-                  {limit.unit}
-                </span>
-              </div>
-            );
-          })}
-        </div>
       </div>
     </SettingsSection>
   );
