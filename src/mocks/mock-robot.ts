@@ -69,16 +69,41 @@ export interface MockRobot {
  * ------------------------------------------------------------------------- */
 
 const SEED_POIS: POI[] = [
-  poi("lobby", "Lobby", -1.6, -1.6, 0, "Selamat datang di lobi utama."),
-  poi("hall-a", "Hall A", 0.6, 0.4, Math.PI / 2, "Ini adalah Hall A."),
-  poi("hall-b", "Hall B", 1.9, -1.2, 0, "Hall B menampilkan koleksi sejarah."),
+  poi(
+    "lobby",
+    "Lobby",
+    -1.6,
+    -1.6,
+    0,
+    "Titik awal tur dan meja informasi.",
+    "Selamat datang di lobi utama. Dari sini kita mulai tur, ya!",
+  ),
+  poi(
+    "hall-a",
+    "Hall A",
+    0.6,
+    0.4,
+    Math.PI / 2,
+    "Ruang pamer teknologi.",
+    "Ini adalah Hall A, tempat kita melihat teknologi terbaru dari dekat.",
+  ),
+  poi(
+    "hall-b",
+    "Hall B",
+    1.9,
+    -1.2,
+    0,
+    "Galeri perjalanan dan sejarah.",
+    "Hall B menampilkan perjalanan dan sejarah dalam satu galeri.",
+  ),
   poi(
     "garden",
     "Garden",
     -0.8,
     1.8,
     Math.PI,
-    "Taman kami terbuka setiap hari.",
+    "Taman terbuka untuk bersantai.",
+    "Taman ini terbuka setiap hari. Silakan bersantai sejenak.",
   ),
 ];
 
@@ -98,12 +123,13 @@ function poi(
   x: number,
   y: number,
   yaw: number,
+  description: string,
   narration: string,
 ): POI {
   return {
     id,
     name,
-    description: "",
+    description,
     x,
     y,
     yaw,
@@ -112,6 +138,36 @@ function poi(
     gesture: id === "lobby" ? "hello" : "",
     dwellSec: 3,
   };
+}
+
+/**
+ * Canned answers of the demo robot (no LLM, no robot): enough for a
+ * showroom demo of the conversation flow.
+ */
+function demoAnswer(
+  question: string,
+  language: "id" | "en",
+  places: string[],
+): string {
+  const q = question.toLowerCase();
+  const list = places.join(", ");
+  const has = (...words: string[]) => words.some((w) => q.includes(w));
+  if (language === "en") {
+    if (has("who", "your name", "what are you"))
+      return "I'm Molly, a four-legged robot guide built by Ezra Robotics. Nice to meet you!";
+    if (has("tour", "where", "place", "see"))
+      return `On my tour we visit ${list}. Just follow me!`;
+    if (has("walk", "legs", "move"))
+      return "I walk on four legs and find my way with a map from my LiDAR sensor.";
+    return "I'm in demo mode right now, so my answers are short. Ask me about myself or the tour!";
+  }
+  if (has("siapa", "nama", "kamu apa"))
+    return "Halo Kak, aku Molly, robot pemandu berkaki empat buatan Ezra Robotics. Senang bertemu!";
+  if (has("tur", "tour", "mana", "tempat", "lihat"))
+    return `Di tur ini kita akan mengunjungi ${list}. Yuk, ikuti aku!`;
+  if (has("jalan", "kaki", "gerak"))
+    return "Aku berjalan dengan empat kaki dan menemukan jalan dari peta yang kubuat dengan sensor LiDAR.";
+  return "Aku sedang dalam mode demo, jadi jawabanku masih singkat. Tanya tentang aku atau tur, ya!";
 }
 
 const WALK_SPEED = 0.5; // m/s, the follower's target_linear_velocity
@@ -610,10 +666,11 @@ function createMockRobot(): MockRobot {
       return later(ok(enabled ? "greeter on" : "greeter off"), 100);
     },
     ask: async (question, language, speakAnswer) => {
-      const answer =
-        language === "en"
-          ? `(mock) This site has ${state.pois.length} points of interest.`
-          : `(mock) Tempat ini punya ${state.pois.length} titik menarik.`;
+      const answer = demoAnswer(
+        question,
+        language === "en" ? "en" : "id",
+        state.pois.map((p) => p.name),
+      );
       await later(null, 900);
       if (speakAnswer) speak(answer, language);
       return { ...ok(""), answer: question ? answer : "" };
