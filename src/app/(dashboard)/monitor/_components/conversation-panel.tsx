@@ -1,18 +1,25 @@
 "use client";
 
-import { Loader2, Send, Trash2 } from "lucide-react";
+import { Bot, Loader2, Mic, Send, Sparkles, Trash2 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { MollyButton, MollySwitch, MollyTextarea } from "@/components/ui/molly";
-import { useRobotApi } from "@/hooks/use-robot-api";
+import {
+  MollyButton,
+  MollyConfirmButton,
+  MollySwitch,
+  MollyTextarea,
+} from "@/components/ui/molly";
+import { useAssistant } from "@/hooks/use-assistant";
+import { clearConversationHistory } from "@/lib/conversation/api";
 import { cn } from "@/lib/utils";
-import { useInteractionStore } from "@/stores/use-interaction-store";
+import { useConversationStore } from "@/stores/use-conversation-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
+import { toast } from "@/stores/use-toast-store";
 import type { ConversationEntry } from "@/types";
 
 const TONES = {
   question: {
     border: "border-l-border-strong",
-    bg: "bg-mol-secondary",
+    bg: "bg-mol-tertiary",
     label: "text-txt-tertiary",
   },
   answer: {
@@ -38,17 +45,19 @@ function Bubble({
   children,
 }: {
   tone: keyof typeof TONES;
-  tag: string;
+  tag: ReactNode;
   meta?: string;
   children: ReactNode;
 }) {
   const t = TONES[tone];
   return (
-    <div className={cn("px-2.5 py-2 border-l-[3px]", t.border, t.bg)}>
-      <div className="flex items-center justify-between mb-1">
+    <div
+      className={cn("rounded-r-lg border-l-[3px] px-2.5 py-2", t.border, t.bg)}
+    >
+      <div className="mb-1 flex items-center justify-between">
         <span
           className={cn(
-            "font-mono text-[10px] font-bold uppercase tracking-widest",
+            "flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest",
             t.label,
           )}
         >
@@ -58,7 +67,7 @@ function Bubble({
           <span className="font-mono text-[10px] text-txt-muted">{meta}</span>
         )}
       </div>
-      <div className="text-xs text-txt-secondary leading-relaxed whitespace-pre-wrap">
+      <div className="whitespace-pre-wrap text-xs leading-relaxed text-txt-secondary">
         {children}
       </div>
     </div>
@@ -66,21 +75,35 @@ function Bubble({
 }
 
 function Exchange({ entry }: { entry: ConversationEntry }) {
+  const engine = entry.engine === "llm" ? "LLM" : "robot";
   return (
-    <div className="flex flex-col gap-1 animate-fade-in">
-      <Bubble tone="question" tag="Question" meta={clock(entry.at)}>
+    <div className="flex animate-fade-in flex-col gap-1">
+      <Bubble
+        tone="question"
+        tag={
+          <>
+            {entry.source === "robot" && <Mic size={10} />}
+            {entry.source === "robot" ? "Asked in person" : "Question"}
+          </>
+        }
+        meta={clock(entry.at)}
+      >
         {entry.question}
       </Bubble>
-      {entry.pending ? (
+      {entry.pending && !entry.answer ? (
         <Bubble tone="answer" tag="Molly" meta="thinking…">
           <Loader2 size={12} className="animate-spin text-violet" />
         </Bubble>
       ) : (
         <Bubble
           tone={entry.ok ? "answer" : "failed"}
-          tag={entry.ok ? "Molly" : "No answer"}
+          tag={entry.ok ? `Molly · ${engine}` : "No answer"}
           meta={
-            entry.ms === null ? undefined : `${(entry.ms / 1000).toFixed(1)} s`
+            entry.pending
+              ? "answering…"
+              : entry.ms === null
+                ? undefined
+                : `${(entry.ms / 1000).toFixed(1)} s${entry.spoken ? " · spoken" : ""}`
           }
         >
           {entry.answer || "—"}
@@ -91,72 +114,64 @@ function Exchange({ entry }: { entry: ConversationEntry }) {
 }
 
 /**
- * Ask the conversation model about the site (/interaction/ask) and read
- * every exchange the robot answered (interaction/conversation), including
- * those asked from other dashboards.
+ * Ask Molly from the operator page and read every exchange: from this or
+ * any other screen, and those asked to the robot in person. Answers come
+ * from the external LLM gateway (with the live robot context) when it is
+ * configured, otherwise from the robot (/interaction/ask).
  */
 export function ConversationPanel() {
-  const api = useRobotApi();
-  const conversation = useInteractionStore((s) => s.conversation);
-  const addConversation = useInteractionStore((s) => s.addConversation);
-  const resolveConversation = useInteractionStore((s) => s.resolveConversation);
-  const clearConversation = useInteractionStore((s) => s.clearConversation);
+  const { ask, busy, engine, status } = useAssistant();
+  const conversation = useConversationStore((s) => s.entries);
   const language = useSettingsStore((s) => s.interaction.language);
+  const speakDefault = useSettingsStore((s) => s.interaction.speakAnswers);
 
   const [question, setQuestion] = useState("");
-  const [speak, setSpeak] = useState(true);
-  const askCount = useRef(0);
+  const [speak, setSpeak] = useState(speakDefault);
   const listRef = useRef<HTMLDivElement>(null);
-
-  const waiting = conversation.some((e) => e.pending);
   const last = conversation.at(-1);
 
-  // keep the newest exchange (and its answer when it lands) in view
+  // keep the newest exchange (and its answer as it streams) in view
   useEffect(() => {
     if (!last) return;
     const el = listRef.current;
     el?.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [last]);
 
-  const ask = async () => {
+  const send = () => {
     const q = question.trim();
-    if (!q || waiting) return;
-    askCount.current += 1;
-    const id = `ask_${Date.now()}_${askCount.current}`;
-    const started = performance.now();
-    addConversation({
-      id,
-      question: q,
-      answer: "",
-      ms: null,
-      ok: true,
-      pending: true,
-      at: Date.now(),
-    });
+    if (!q || busy) return;
     setQuestion("");
-    try {
-      const res = await api.ask(q, language, speak);
-      resolveConversation(id, {
-        answer: res.answer || res.message,
-        ok: res.success && res.answer !== "",
-        ms: Math.round(performance.now() - started),
-      });
-    } catch (err) {
-      resolveConversation(id, {
-        answer: err instanceof Error ? err.message : String(err),
-        ok: false,
-      });
-    }
+    void ask(q, { language: language === "en" ? "en" : "id", speak });
+  };
+
+  const clear = async () => {
+    const clearedAt = await clearConversationHistory();
+    if (clearedAt === null)
+      toast.error("Clear failed", "History not reachable");
+    else useConversationStore.getState().clear(clearedAt);
   };
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-1.5 text-[11px] text-txt-tertiary">
+        {engine === "llm" ? (
+          <Sparkles size={12} className="text-violet" />
+        ) : (
+          <Bot size={12} className="text-cyan" />
+        )}
+        <span className="truncate">
+          {engine === "llm"
+            ? `External LLM${status?.model ? ` · ${status.model}` : ""}${status?.host ? ` @ ${status.host}` : ""}`
+            : "Robot conversation node"}
+        </span>
+      </div>
+
       <div
         ref={listRef}
-        className="h-60 overflow-y-auto flex flex-col gap-2 pr-1"
+        className="flex h-60 flex-col gap-2 overflow-y-auto pr-1"
       >
         {conversation.length === 0 && (
-          <div className="text-xs text-txt-muted text-center py-8">
+          <div className="py-8 text-center text-xs text-txt-muted">
             No questions yet
           </div>
         )}
@@ -176,24 +191,25 @@ export function ConversationPanel() {
               !e.nativeEvent.isComposing
             ) {
               e.preventDefault();
-              void ask();
+              send();
             }
           }}
-          placeholder="Ask Molly about this place… (Enter)"
+          placeholder="Ask Molly… (Enter)"
           aria-label="Question for Molly"
           textareaSize="sm"
           rows={2}
-          className="w-full min-h-14 max-h-28 pr-10"
+          maxLength={500}
+          className="max-h-28 min-h-14 w-full pr-10"
         />
         <MollyButton
           size="xs"
-          onClick={ask}
-          disabled={!question.trim() || waiting}
+          onClick={send}
+          disabled={!question.trim() || busy}
           aria-label="Ask"
           title="Ask (Enter)"
-          className="absolute bottom-2 right-2"
+          className="absolute right-2 bottom-2"
         >
-          {waiting ? (
+          {busy ? (
             <Loader2 size={12} className="animate-spin" />
           ) : (
             <Send size={12} />
@@ -209,16 +225,17 @@ export function ConversationPanel() {
           ariaLabel="Speak the answer"
           size="sm"
         />
-        <MollyButton
+        <MollyConfirmButton
           variant="ghost"
           size="xs"
           className="ml-auto"
-          disabled={conversation.length === 0 || waiting}
-          onClick={clearConversation}
+          disabled={conversation.length === 0 || busy}
+          onConfirm={() => void clear()}
+          confirmLabel="Clear for everyone?"
         >
           <Trash2 size={10} />
-          Clear
-        </MollyButton>
+          Clear history
+        </MollyConfirmButton>
       </div>
     </div>
   );

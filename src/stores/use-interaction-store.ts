@@ -1,38 +1,29 @@
 import { create } from "zustand";
 
 import type {
-  ConversationEntry,
   GreeterSnapshot,
   SpeechSnapshot,
   VisitorsSnapshot,
 } from "@/types";
-
-const MAX_CONVERSATION = 100;
 
 interface InteractionStore {
   /** interaction/speech_status */
   speech: SpeechSnapshot;
   /** interaction/greeter, null until the greeter reports */
   greeter: GreeterSnapshot | null;
-  /** Questions and answers, oldest first */
-  conversation: ConversationEntry[];
   /** perception/visitors */
   visitors: VisitorsSnapshot;
 
   setSpeech: (speech: SpeechSnapshot) => void;
   setGreeter: (greeter: GreeterSnapshot) => void;
   setVisitors: (visitors: VisitorsSnapshot) => void;
-  /** Append an entry (a pending question or a robot-reported exchange). */
-  addConversation: (entry: ConversationEntry) => void;
-  /** Replace a pending entry by id with its answer. */
-  resolveConversation: (id: string, patch: Partial<ConversationEntry>) => void;
-  clearConversation: () => void;
-  /** Forget the robot-reported state (the conversation history stays). */
+  /** Forget the robot-reported state. */
   reset: () => void;
 }
 
 /**
- * Visitor interaction: speech, greeter, conversation and who is around.
+ * Visitor interaction: speech, greeter and who is around. Conversations
+ * live in use-conversation-store.
  */
 const INITIAL = {
   speech: {
@@ -58,21 +49,9 @@ const INITIAL = {
 
 export const useInteractionStore = create<InteractionStore>((set) => ({
   ...INITIAL,
-  conversation: [],
 
   setSpeech: (speech) => set({ speech }),
   setGreeter: (greeter) => set({ greeter }),
   setVisitors: (visitors) => set({ visitors }),
-  addConversation: (entry) =>
-    set((prev) => ({
-      conversation: [...prev.conversation, entry].slice(-MAX_CONVERSATION),
-    })),
-  resolveConversation: (id, patch) =>
-    set((prev) => ({
-      conversation: prev.conversation.map((e) =>
-        e.id === id ? { ...e, ...patch, pending: false } : e,
-      ),
-    })),
-  clearConversation: () => set({ conversation: [] }),
   reset: () => set(INITIAL),
 }));

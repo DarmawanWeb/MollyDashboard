@@ -1,6 +1,7 @@
 export * from "./activity";
 export * from "./brand";
 export * from "./connection";
+export * from "./conversation";
 export * from "./interaction";
 export * from "./navigation";
 export * from "./poi";

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { saveConversation, toStored } from "@/lib/conversation/api";
+import { sameQuestion } from "@/lib/conversation/text";
 import {
   decodeSpeechStatus,
   decodeVisitors,
@@ -29,6 +31,7 @@ import {
 } from "@/lib/site/codec";
 import { parseHealth } from "@/lib/system/health";
 import { logFromRosout } from "@/lib/system/logs";
+import { useConversationStore } from "@/stores/use-conversation-store";
 import { useInteractionStore } from "@/stores/use-interaction-store";
 import { useNavigationStore } from "@/stores/use-navigation-store";
 import { useRobotStore } from "@/stores/use-robot-store";
@@ -138,14 +141,21 @@ function syncInteraction(ros: RosClient): Unsubscribe[] {
     ros.subscribe(TOPICS.CONVERSATION, (msg) => {
       const now = Date.now();
       const entry = parseConversation(msg.data, now);
-      if (!entry) return;
-      const known = useInteractionStore
-        .getState()
-        .conversation.some(
-          (e) =>
-            e.question === entry.question && now - e.at < DUPLICATE_WINDOW_MS,
-        );
-      if (!known) interaction.addConversation(entry);
+      if (!entry?.ok || !entry.answer) return;
+      const conversations = useConversationStore.getState();
+      const known = conversations.entries.some(
+        (e) =>
+          sameQuestion(e.question, entry.question) &&
+          now - e.at < DUPLICATE_WINDOW_MS,
+      );
+      if (known) return;
+      // every screen hears it; the server keeps one copy and tells us its id
+      conversations.upsert(entry);
+      void saveConversation(toStored(entry)).then((canonical) => {
+        if (canonical) {
+          useConversationStore.getState().adopt(entry.id, canonical);
+        }
+      });
     }),
     ros.subscribe(
       TOPICS.VISITORS,

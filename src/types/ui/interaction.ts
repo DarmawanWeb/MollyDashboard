@@ -1,5 +1,6 @@
 /**
- * Visitor interaction types: speech, greeter, conversation, visitors.
+ * Visitor interaction types: speech, greeter, visitors. Conversations are
+ * in conversation.ts.
  */
 
 import type { Language } from "./poi";
@@ -21,18 +22,6 @@ export interface GreeterSnapshot {
   state: string;
   /** s since the last greeting, null when never */
   lastGreetAge: number | null;
-}
-
-export interface ConversationEntry {
-  id: string;
-  question: string;
-  answer: string;
-  /** model latency in ms, null while pending */
-  ms: number | null;
-  ok: boolean;
-  pending: boolean;
-  /** ms since epoch */
-  at: number;
 }
 
 /** A visitor next to the robot, base_link frame (x forward, y left). */

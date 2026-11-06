@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Language, QuickPhrase } from "@/types";
+import type { EngineChoice, Language, QuickPhrase } from "@/types";
 
 /* ----------------------------------------------------------------------------
  * Schema
@@ -27,6 +27,10 @@ export interface InteractionConfig {
   language: Language;
   /** One-tap phrases on the speech panel */
   quickPhrases: QuickPhrase[];
+  /** Who answers questions: "auto" uses the external LLM when configured */
+  engine: EngineChoice;
+  /** Molly says answers out loud by default */
+  speakAnswers: boolean;
 }
 
 interface SettingsState {
@@ -68,6 +72,8 @@ const DEFAULTS = {
   interaction: {
     language: "id" as Language,
     quickPhrases: DEFAULT_PHRASES,
+    engine: "auto" as EngineChoice,
+    speakAnswers: true,
   },
 } as const satisfies Pick<
   SettingsState,
@@ -82,8 +88,16 @@ type PersistedSettings = Pick<
 /** Bring settings saved by an older dashboard version to the current schema. */
 function migrate(persisted: unknown, version: number): PersistedSettings {
   const base: PersistedSettings = structuredClone(DEFAULTS);
-  if (version >= 2 || typeof persisted !== "object" || persisted === null) {
-    return { ...base, ...(persisted as Partial<PersistedSettings>) };
+  if (typeof persisted !== "object" || persisted === null) return base;
+  if (version >= 2) {
+    // v2 also kept teleop limits (the control page is gone); v3 added the
+    // answer engine and spoken answers to `interaction`.
+    const v2 = persisted as Partial<PersistedSettings>;
+    return {
+      connection: { ...base.connection, ...v2.connection },
+      video: { ...base.video, ...v2.video },
+      interaction: { ...base.interaction, ...v2.interaction },
+    };
   }
   // v1 kept connection URLs (with a hard-coded default robot address), stream,
   // teleop, nav2 and LLM sections; only the URLs the operator typed survive.
@@ -125,7 +139,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "molly-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
       migrate,
       partialize: (s): PersistedSettings => ({
         connection: s.connection,

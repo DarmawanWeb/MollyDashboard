@@ -5,6 +5,7 @@
 
 import type { SpeechStatusWire, VisitorsWire } from "@/types/ros/molly";
 import type {
+  ChatLanguage,
   ConversationEntry,
   GreeterSnapshot,
   SpeechSnapshot,
@@ -98,20 +99,31 @@ export function parseGreeter(raw: string): GreeterSnapshot | null {
   };
 }
 
-/** /interaction/conversation: {question, answer, ms, ok}. */
+/**
+ * /interaction/conversation: {question, answer, ms, ok, language?, spoken?},
+ * an exchange the robot answered (asked in person or from a screen).
+ */
 export function parseConversation(
   raw: string,
   at: number,
+  fallbackLanguage: ChatLanguage = "id",
 ): ConversationEntry | null {
   const o = parseObject(raw);
   if (!o || typeof o.question !== "string") return null;
+  const language: ChatLanguage =
+    o.language === "en" || o.language === "id" ? o.language : fallbackLanguage;
   return {
-    id: `c_${at}_${Math.random().toString(36).slice(2, 7)}`,
-    question: o.question,
-    answer: typeof o.answer === "string" ? o.answer : "",
+    id: `r_${at.toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    question: o.question.trim(),
+    answer: typeof o.answer === "string" ? o.answer.trim() : "",
     ms: typeof o.ms === "number" ? o.ms : null,
     ok: o.ok !== false,
     pending: false,
     at,
+    updatedAt: at,
+    language,
+    engine: "robot",
+    source: "robot",
+    spoken: o.spoken !== false,
   };
 }
