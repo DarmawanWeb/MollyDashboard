@@ -1,66 +1,45 @@
 "use client";
 
+import { Copyright, Credits } from "@/components/brand/credits";
 import { useMockMode } from "@/hooks/use-mock-mode";
 import { cn } from "@/lib/utils";
 import { useRobotStore } from "@/stores/use-robot-store";
 import { useSiteStore } from "@/stores/use-site-store";
-import { useSystemStore } from "@/stores/use-system-store";
 
-const pct = (v: number | null | undefined) =>
-  v === null || v === undefined ? "—" : `${Math.round(v)}%`;
+const STATUS = {
+  connected: { dot: "bg-green", text: "text-green", label: "Connected" },
+  reconnecting: {
+    dot: "bg-amber motion-safe:animate-pulse",
+    text: "text-amber",
+    label: "Reconnecting",
+  },
+  disconnected: { dot: "bg-red", text: "text-red", label: "Disconnected" },
+} as const;
 
 export function Footer() {
   const connectionStatus = useRobotStore((state) => state.connectionStatus);
   const site = useSiteStore((s) => s.status.site);
-  const health = useSystemStore((s) => s.health);
   const mock = useMockMode();
-
-  const dotClass =
-    connectionStatus === "connected"
-      ? "bg-green"
-      : connectionStatus === "reconnecting"
-        ? "bg-amber motion-safe:animate-pulse"
-        : "bg-red";
-
-  const textClass =
-    connectionStatus === "connected"
-      ? "text-green"
-      : connectionStatus === "reconnecting"
-        ? "text-amber"
-        : "text-red";
+  const status = STATUS[connectionStatus] ?? STATUS.disconnected;
 
   return (
-    <footer className="flex h-7 shrink-0 items-center justify-between border-t border-border-subtle bg-mol-primary px-4 font-mono text-[10px] text-txt-muted">
+    <footer className="flex h-9 shrink-0 items-center justify-between gap-4 border-t border-border-subtle bg-mol-primary px-4 text-[11px] text-txt-muted">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5">
-          <div
-            aria-hidden
-            className={cn("h-1.5 w-1.5 rounded-full", dotClass)}
-          />
-          <span className={textClass}>{connectionStatus}</span>
-          {mock && <span className="text-amber">· mock</span>}
+          <span aria-hidden className={cn("size-2 rounded-full", status.dot)} />
+          <span className={cn("font-semibold", status.text)}>
+            {status.label}
+          </span>
+          {mock && <span className="text-amber">· mock robot</span>}
         </div>
-
-        <span>Deep Robotics Lite3</span>
-        <span>ROS 2 Humble · Jetson Orin NX</span>
-        <span>{site ? `site ${site}` : "no site"}</span>
+        <span className="hidden sm:inline">
+          {site ? `Site ${site}` : "No site loaded"}
+        </span>
       </div>
 
-      <div className="flex items-center gap-4">
-        <span>CPU: {pct(health?.cpuPercent)}</span>
-        <span>GPU: {pct(health?.gpuPercent)}</span>
-        <span>
-          RAM:{" "}
-          {health?.memoryUsedGb !== null && health?.memoryUsedGb !== undefined
-            ? `${health.memoryUsedGb}/${health.memoryTotalGb ?? "?"} GB`
-            : "—"}
-        </span>
-        <span>
-          Temp:{" "}
-          {health?.cpuTempC !== null && health?.cpuTempC !== undefined
-            ? `${health.cpuTempC}°C`
-            : "—"}
-        </span>
+      <div className="flex min-w-0 items-center gap-4 truncate">
+        <Credits className="hidden md:inline-flex" />
+        <Copyright className="hidden xl:inline" />
       </div>
     </footer>
   );
