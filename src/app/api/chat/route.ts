@@ -121,8 +121,9 @@ export async function POST(req: Request) {
           answer += rest;
           controller.enqueue(encoder.encode(rest));
         }
-        controller.close();
 
+        // store before closing, so the screen's follow-up (spoken: true)
+        // lands after this entry, never before it
         const clean = plainText(answer);
         if (clean) {
           const now = Date.now();
@@ -140,6 +141,7 @@ export async function POST(req: Request) {
             spoken: false,
           }).catch((err) => console.error(`[history] ${String(err)}`));
         }
+        controller.close();
       } catch (err) {
         console.error(
           `[assistant] stream: ${err instanceof Error ? err.message : String(err)}`,

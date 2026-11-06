@@ -72,10 +72,9 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         spoken: stored.spoken || (local?.spoken ?? false),
         pending: false,
       };
-      return {
-        entries: sorted([...rest, entry]),
-        syncedUntil: Math.max(s.syncedUntil, stored.updatedAt),
-      };
+      // the poll watermark stays: another screen's entry stored just before
+      // this one must still come in with the next poll
+      return { entries: sorted([...rest, entry]) };
     }),
 
   merge: (stored, clearedAt) =>

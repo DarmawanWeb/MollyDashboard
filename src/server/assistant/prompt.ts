@@ -26,7 +26,9 @@ const MAX_KNOWLEDGE_CHARS = 12_000;
 
 export function readKnowledge(file: string): string {
   if (!file) return "";
-  const full = path.isAbsolute(file) ? file : path.join(process.cwd(), file);
+  const full = path.isAbsolute(file)
+    ? file
+    : path.join(/*turbopackIgnore: true*/ process.cwd(), file);
   try {
     const { mtimeMs } = statSync(full);
     if (knowledgeCache?.file === full && knowledgeCache.mtimeMs === mtimeMs) {
@@ -110,8 +112,11 @@ function liveStatus(
 
   const places = context.places
     .map((p) => {
-      const about = [p.description, p.narration].filter(Boolean).join(" ");
-      return `- ${p.name}${about ? `: ${clip(about, 260)}` : ""}`;
+      const about = p.description ? `: ${clip(p.description, 200)}` : "";
+      const told = p.narration
+        ? ` (what you say there: "${clip(p.narration, 200)}")`
+        : "";
+      return `- ${p.name}${about}${told}`;
     })
     .join("\n");
 
