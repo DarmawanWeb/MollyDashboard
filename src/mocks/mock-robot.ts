@@ -456,13 +456,26 @@ function createMockRobot(): MockRobot {
       ultrasoundFront: Math.round((2.4 + Math.sin(t / 2) * 0.6) * 100) / 100,
     };
 
-    // a few visitors wandering behind and beside the robot
-    const positions = [
-      { x: -1.2 + Math.sin(t / 3) * 0.2, y: 0.3, confidence: 0.9 },
-      { x: -1.6, y: -0.4 + Math.cos(t / 4) * 0.2, confidence: 0.8 },
-      { x: 1.8 + Math.sin(t / 5) * 0.4, y: 1.0, confidence: 0.6 },
+    // a few visitors lingering at the exhibits (map frame), reported the way
+    // the robot does: in its own frame, only those within camera range
+    const people = [
+      { x: -1.1 + Math.sin(t / 3) * 0.15, y: -0.9, confidence: 0.9 },
+      { x: 0.1, y: 1.0 + Math.cos(t / 4) * 0.15, confidence: 0.8 },
+      { x: 1.3 + Math.sin(t / 5) * 0.2, y: -0.5, confidence: 0.6 },
     ];
-    const dists = positions.map((p) => Math.hypot(p.x, p.y));
+    const cos = Math.cos(state.pose.yaw);
+    const sin = Math.sin(state.pose.yaw);
+    const positions = people
+      .map((p) => {
+        const dx = p.x - state.pose.x;
+        const dy = p.y - state.pose.y;
+        return {
+          x: cos * dx + sin * dy,
+          y: -sin * dx + cos * dy,
+          confidence: p.confidence,
+        };
+      })
+      .filter((p) => Math.hypot(p.x, p.y) <= 3.5);
     const front = positions.filter((p) => p.x > 0);
     const behind = positions.filter((p) => p.x <= 0);
     const nearestOf = (ps: typeof positions) =>
@@ -472,7 +485,7 @@ function createMockRobot(): MockRobot {
       count: positions.length,
       front: front.length,
       behind: behind.length,
-      nearest: Math.min(...dists),
+      nearest: nearestOf(positions),
       nearestFront: nearestOf(front),
       nearestBehind: nearestOf(behind),
     };

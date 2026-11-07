@@ -1,10 +1,11 @@
 /**
- * Mock occupancy grid used by /monitor and /mapping pages when rosbridge
- * is disconnected. Synthesizes a 6m × 5m floor plan with walls, four
- * rooms, doorways, and some scattered unknown patches.
+ * Mock occupancy grid used by the pages when rosbridge is disconnected (and
+ * by the demo display): a 6m × 5m exhibition floor with an entrance, two
+ * partitions, a few exhibit stands and a closed-off corner.
  *
- * Dimensions chosen so the robot's default pose at (0, 0) sits roughly
- * in the central corridor.
+ * Laid out around the seed POIs of the mock robot, so the straight walks of
+ * the demo tour (Lobby → Hall A → Hall B → Garden → Lobby) never cross a
+ * wall. The robot's default pose sits near the entrance, by the lobby.
  */
 
 import type { OccupancyGrid } from "@/types/ros";
@@ -13,54 +14,58 @@ const W = 120;
 const H = 100;
 const RESOLUTION = 0.05;
 
+const FREE = 0;
+const WALL = 100;
+const UNKNOWN = -1;
+
+/** Rectangles in cells: column, row (row 0 = the bottom, y = -2.5 m), w, h. */
+type Rect = readonly [number, number, number, number];
+
 function buildMockGrid(): OccupancyGrid {
-  const data = new Array<number>(W * H).fill(0);
+  const data = new Array<number>(W * H).fill(FREE);
+  const fill = ([x, y, w, h]: Rect, value: number) => {
+    for (let row = y; row < y + h; row++) {
+      for (let col = x; col < x + w; col++) {
+        if (col >= 0 && col < W && row >= 0 && row < H) {
+          data[row * W + col] = value;
+        }
+      }
+    }
+  };
 
   // outer walls
-  for (let x = 0; x < W; x++) {
-    data[x] = 100;
-    data[(H - 1) * W + x] = 100;
-  }
-  for (let y = 0; y < H; y++) {
-    data[y * W] = 100;
-    data[y * W + W - 1] = 100;
-  }
-
-  // inner room walls
-  const walls: ReadonlyArray<readonly [number, number, number, number]> = [
-    [20, 10, 2, 60],
-    [60, 10, 2, 60],
-    [20, 40, 40, 2],
-    [20, 70, 40, 2],
+  const outer: Rect[] = [
+    [0, 0, W, 2],
+    [0, H - 2, W, 2],
+    [0, 0, 2, H],
+    [W - 2, 0, 2, H],
   ];
-  for (const [x, y, w, h] of walls) {
-    for (let dy = 0; dy < h; dy++) {
-      for (let dx = 0; dx < w; dx++) {
-        data[(y + dy) * W + (x + dx)] = 100;
-      }
-    }
-  }
+  for (const r of outer) fill(r, WALL);
 
-  // doorways punched through the inner walls
-  const doors: ReadonlyArray<readonly [number, number, number, number]> = [
-    [20, 30, 2, 4],
-    [20, 55, 2, 4],
-    [60, 25, 2, 4],
-    [60, 55, 2, 4],
+  // a closed-off corner (top right): not part of the floor
+  fill([102, 78, W - 102, H - 78], UNKNOWN);
+  fill([100, 78, 2, H - 78], WALL);
+  fill([100, 76, W - 100, 2], WALL);
+
+  // the entrance in the bottom wall, by the lobby
+  fill([30, 0, 12, 2], FREE);
+
+  const inner: Rect[] = [
+    // partition between the lobby and the west wing
+    [2, 44, 18, 2],
+    // partition of the east gallery
+    [84, 56, 2, 20],
+    // exhibit stands
+    [46, 8, 12, 6],
+    [58, 84, 10, 6],
+    [104, 40, 8, 10],
+    // planters by the garden
+    [18, 80, 6, 10],
+    [30, 92, 10, 4],
+    // info desk in the lobby
+    [8, 24, 10, 4],
   ];
-  for (const [x, y, w, h] of doors) {
-    for (let dy = 0; dy < h; dy++) {
-      for (let dx = 0; dx < w; dx++) {
-        data[(y + dy) * W + (x + dx)] = 0;
-      }
-    }
-  }
-
-  // scattered unknown patches for visual texture
-  for (let i = 0; i < 400; i++) {
-    const idx = Math.floor(Math.random() * data.length);
-    if (data[idx] === 0) data[idx] = -1;
-  }
+  for (const r of inner) fill(r, WALL);
 
   return {
     header: {
