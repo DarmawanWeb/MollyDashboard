@@ -8,7 +8,13 @@ import { cn } from "@/lib/utils";
 const LOCALE: Record<DisplayLanguage, string> = { id: "id-ID", en: "en-GB" };
 
 /** Big wall clock with the date, in the display's language. */
-export function LiveClock({ language }: { language: DisplayLanguage }) {
+export function LiveClock({
+  language,
+  className,
+}: {
+  language: DisplayLanguage;
+  className?: string;
+}) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -34,15 +40,15 @@ export function LiveClock({ language }: { language: DisplayLanguage }) {
     : "";
 
   return (
-    <div className="flex flex-col items-end leading-none">
+    <div className={cn("flex flex-col items-end leading-none", className)}>
       <span
-        className="font-bold text-2xl tabular-nums tracking-tight"
+        className="font-bold text-xl tabular-nums tracking-tight"
         suppressHydrationWarning
       >
         {time.replace(".", ":")}
       </span>
       <span
-        className="mt-1 text-[0.7rem] font-medium text-txt-tertiary"
+        className="mt-0.5 text-[0.65rem] font-medium text-txt-tertiary"
         suppressHydrationWarning
       >
         {date}
@@ -81,7 +87,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
+        "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold",
         style.ring,
         style.text,
       )}

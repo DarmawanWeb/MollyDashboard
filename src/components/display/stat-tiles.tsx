@@ -38,11 +38,11 @@ function Tile({
   children?: ReactNode;
 }) {
   return (
-    <div className="display-card flex min-w-0 items-center gap-3 px-3.5 py-3 2xl:gap-3.5 2xl:px-4 2xl:py-3.5">
+    <div className="display-card flex min-w-0 items-center gap-3 px-3.5 py-3">
       <span
         aria-hidden
         className={cn(
-          "grid size-10 shrink-0 place-items-center rounded-2xl 2xl:size-11 [&>svg]:size-5",
+          "grid size-10 shrink-0 place-items-center rounded-2xl [&>svg]:size-5",
           tint,
         )}
       >
@@ -63,7 +63,7 @@ function Tile({
           )}
         </div>
         {children ?? (
-          <div className="hidden truncate text-[0.68rem] text-txt-muted 2xl:block">
+          <div className="hidden truncate text-[0.68rem] text-txt-muted @2xl:block">
             {hint}
           </div>
         )}
@@ -119,7 +119,7 @@ export function StatTiles({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-5 xl:grid-cols-5",
+        "grid grid-cols-2 gap-3 @2xl:grid-cols-3 @5xl:grid-cols-5",
         className,
       )}
     >

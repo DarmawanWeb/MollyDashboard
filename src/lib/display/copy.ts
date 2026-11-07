@@ -153,6 +153,12 @@ const id = {
     poweredBy: "Kolaborasi",
     operator: "Operator",
   },
+  present: {
+    start: "Presentasi",
+    title: "Tampilkan layar penuh untuk TV, tanpa menu operator",
+    exit: "Tahan untuk keluar dari mode presentasi",
+    hint: "Mode presentasi · tekan Esc atau tahan tombol keluar di kanan atas",
+  },
 };
 
 export type DisplayCopy = typeof id;
@@ -261,6 +267,12 @@ const en: DisplayCopy = {
   footer: {
     poweredBy: "In partnership",
     operator: "Operator",
+  },
+  present: {
+    start: "Present",
+    title: "Full screen for the TV, without the operator menu",
+    exit: "Hold to leave presentation mode",
+    hint: "Presentation mode · press Esc or hold the exit button at the top right",
   },
 };
 

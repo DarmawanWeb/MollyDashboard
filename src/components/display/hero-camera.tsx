@@ -207,7 +207,7 @@ export function HeroCamera({
       <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
         <span
           className={cn(
-            "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold backdrop-blur",
+            "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold backdrop-blur",
             chip,
           )}
         >
@@ -226,12 +226,14 @@ export function HeroCamera({
             : mode === "demo"
               ? copy.camera.demo
               : copy.status.offline}
-          <span className="font-medium opacity-75">· {copy.camera.title}</span>
+          <span className="hidden font-medium opacity-75 @md:inline">
+            · {copy.camera.title}
+          </span>
         </span>
 
         <span
           className={cn(
-            "inline-flex max-w-[60%] items-center gap-2 truncate rounded-full px-3.5 py-1.5 text-sm font-semibold backdrop-blur",
+            "inline-flex min-w-0 max-w-[65%] items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold backdrop-blur",
             chip,
           )}
         >

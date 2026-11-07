@@ -3,13 +3,18 @@
 import { useEffect, useState } from "react";
 
 /**
- * True after the mouse has rested for `idleMs`: the display hides the
- * pointer then, so it does not sit in the middle of the TV.
+ * True after the mouse has rested for `idleMs` while `enabled`: the
+ * presentation mode hides the pointer then, so it does not sit in the
+ * middle of the TV.
  */
-export function useIdleCursor(idleMs = 4000): boolean {
+export function useIdleCursor(idleMs = 4000, enabled = true): boolean {
   const [idle, setIdle] = useState(false);
 
   useEffect(() => {
+    if (!enabled) {
+      setIdle(false);
+      return;
+    }
     let timer = setTimeout(() => setIdle(true), idleMs);
     const wake = () => {
       setIdle(false);
@@ -25,7 +30,7 @@ export function useIdleCursor(idleMs = 4000): boolean {
       window.removeEventListener("pointerdown", wake);
       window.removeEventListener("keydown", wake);
     };
-  }, [idleMs]);
+  }, [idleMs, enabled]);
 
   return idle;
 }

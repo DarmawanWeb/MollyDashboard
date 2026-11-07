@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { BRAND } from "@/constants/brand";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { UI_INIT_SCRIPT } from "@/lib/ui-prefs";
 
 export const metadata: Metadata = {
   title: {
@@ -31,8 +32,10 @@ export default function RootLayout({
     <html lang="id" data-theme="dark" suppressHydrationWarning>
       <head>
         <script
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: static, first-party theme bootstrap; must run before paint
-          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static, first-party theme and shell bootstrap; must run before paint
+          dangerouslySetInnerHTML={{
+            __html: THEME_INIT_SCRIPT + UI_INIT_SCRIPT,
+          }}
         />
       </head>
       <body>

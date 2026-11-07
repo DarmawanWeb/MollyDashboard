@@ -142,7 +142,7 @@ function MeetMolly({ copy, note }: { copy: DisplayCopy; note?: string }) {
   return (
     <div className="flex h-full flex-col gap-3 px-5 pb-5">
       {note && <p className="text-sm text-txt-tertiary">{note}</p>}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 @4xl:grid-cols-4">
         {copy.meet.facts.map((fact, i) => {
           const Icon = icons[i % icons.length];
           return (

@@ -1,19 +1,15 @@
 "use client";
 
+import { PartnerLockup } from "@/components/brand/partner-lockup";
 import { ErrorBoundary } from "@/components/error";
 import { useDisplayMode } from "@/hooks/use-display-mode";
-import { useIdleCursor } from "@/hooks/use-idle-cursor";
 import { useRobotStory } from "@/hooks/use-robot-story";
 import { DISPLAY_COPY } from "@/lib/display/copy";
 import type { Story } from "@/lib/display/story";
-import { cn } from "@/lib/utils";
 import { useDisplayStore } from "@/stores/use-display-store";
 import type { BrandLogos } from "@/types";
 import { ChatPanel } from "./chat/chat-panel";
-import { DailyStatsTracker } from "./daily-stats-tracker";
 import { DemoAutopilot } from "./demo-autopilot";
-import { DisplayFooter } from "./display-footer";
-import { DisplayHeader } from "./display-header";
 import { HeroCamera } from "./hero-camera";
 import { LocationMap } from "./location-map";
 import { StatTiles } from "./stat-tiles";
@@ -24,70 +20,63 @@ const RESTING: Story = { kind: "offline", place: "", target: "" };
 /**
  * The visitor display for the experience center: what Molly sees and says,
  * where she is, the tour, today's numbers, and a chat to ask her anything.
- * Full-screen on a TV (xl and up), stacked on tablets and phones. Nothing
- * technical: the operator pages have that.
+ * Laid out by the width it gets (container queries), so it fits next to the
+ * sidebar, full screen on a TV in presentation mode, and on a phone:
+ *   narrow  one column
+ *   @3xl    two columns, scrolls
+ *   @7xl    three columns that fill the screen (camera, map, chat)
  */
 export function Showcase({ logos }: { logos: BrandLogos }) {
   const mode = useDisplayMode();
   const robotStory = useRobotStory();
   const story = mode === "offline" ? RESTING : robotStory;
   const language = useDisplayStore((s) => s.language);
-  const setLanguage = useDisplayStore((s) => s.setLanguage);
   const copy = DISPLAY_COPY[language];
-  const cursorIdle = useIdleCursor();
 
   return (
     <div
       data-surface="display"
       lang={language}
-      className={cn(
-        "display-backdrop flex min-h-dvh flex-col text-txt-primary xl:h-dvh xl:overflow-hidden",
-        cursorIdle && "cursor-none",
-      )}
+      className="@container flex min-h-0 flex-1 flex-col overflow-y-auto"
     >
-      <DisplayHeader
-        logos={logos}
-        mode={mode}
-        copy={copy}
-        language={language}
-        onLanguage={setLanguage}
-      />
+      {/* the top bar has no room for the logos on narrow screens */}
+      <div className="flex justify-center px-4 pt-4 @3xl:hidden">
+        <PartnerLockup logos={logos} size="sm" />
+      </div>
 
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-4 px-4 pb-3 md:grid-cols-2 lg:px-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(22rem,27rem)] xl:grid-rows-[auto_minmax(0,1fr)_auto]">
+      <div className="grid flex-1 grid-cols-1 gap-4 p-4 @3xl:grid-cols-2 @3xl:p-5 @7xl:min-h-[42rem] @7xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(21rem,26rem)] @7xl:grid-rows-[auto_minmax(0,1fr)_auto] @7xl:p-6">
         <StatTiles
           mode={mode}
           copy={copy}
-          className="md:col-span-2 xl:col-start-1 xl:row-start-1"
+          className="@3xl:col-span-2 @7xl:col-start-1 @7xl:row-start-1"
         />
         <ErrorBoundary>
           <HeroCamera
             mode={mode}
             story={story}
             copy={copy}
-            className="h-[19rem] sm:h-auto sm:aspect-video md:col-span-2 xl:col-span-1 xl:col-start-1 xl:row-start-2 xl:aspect-auto xl:h-auto"
+            className="aspect-[4/3] @md:aspect-video @7xl:col-start-1 @7xl:row-start-2 @7xl:aspect-auto"
           />
         </ErrorBoundary>
         <LocationMap
           mode={mode}
           story={story}
           copy={copy}
-          className="min-h-[20rem] xl:col-start-2 xl:row-start-2 xl:min-h-0"
+          className="min-h-[20rem] @7xl:col-start-2 @7xl:row-start-2 @7xl:min-h-0"
         />
         <TourJourney
           mode={mode}
           story={story}
           copy={copy}
-          className="md:col-span-2 xl:col-span-2 xl:col-start-1 xl:row-start-3"
+          className="@3xl:col-span-2 @7xl:col-start-1 @7xl:row-start-3"
         />
         <ChatPanel
           copy={copy}
           language={language}
-          className="h-[36rem] md:col-span-2 md:h-[40rem] xl:col-span-1 xl:col-start-3 xl:row-span-3 xl:row-start-1 xl:h-auto"
+          className="h-[36rem] @3xl:col-span-2 @7xl:col-span-1 @7xl:col-start-3 @7xl:row-span-3 @7xl:row-start-1 @7xl:h-auto"
         />
-      </main>
+      </div>
 
-      <DisplayFooter copy={copy} language={language} />
-      <DailyStatsTracker mode={mode} />
       {mode === "demo" && <DemoAutopilot />}
     </div>
   );

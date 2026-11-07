@@ -132,6 +132,7 @@ export function HistoryDrawer({
         open ? "visible" : "invisible",
       )}
       inert={!open}
+      data-modal-open={open}
     >
       <button
         type="button"

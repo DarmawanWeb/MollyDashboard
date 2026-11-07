@@ -12,9 +12,17 @@ export function Credits({
 }) {
   const { author, company } = BRAND.credits;
   return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
+    <span
+      className={cn(
+        "inline-flex flex-wrap items-center justify-center gap-x-1.5",
+        className,
+      )}
+    >
       {language === "id" ? "Dibuat dengan" : "Crafted with"}
-      <Heart aria-label="love" className="size-[1em] fill-red text-red" />
+      <Heart
+        aria-label="love"
+        className="size-[1em] shrink-0 fill-red text-red"
+      />
       {language === "id" ? "oleh" : "by"}
       <span className="font-semibold text-txt-secondary">{author}</span>
       <span aria-hidden className="text-txt-muted">

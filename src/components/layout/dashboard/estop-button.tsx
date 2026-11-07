@@ -51,7 +51,7 @@ export function EstopButton() {
             void engage();
           }
         }}
-        className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all active:scale-95 select-none border-red/30 bg-red/10 text-red hover:bg-red/20"
+        className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold uppercase tracking-wider transition-all active:scale-95 select-none border-red/30 bg-red/10 text-red hover:bg-red/20"
       >
         <OctagonX size={14} />
         E-STOP
@@ -65,7 +65,7 @@ export function EstopButton() {
       {...release.handlers}
       title={reason ? `Engaged: ${reason}` : "Engaged"}
       className={cn(
-        "relative overflow-hidden flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider select-none touch-none",
+        "relative flex h-9 shrink-0 items-center gap-1.5 overflow-hidden rounded-xl border px-3 text-xs font-bold uppercase tracking-wider shadow-card select-none touch-none",
         "border-red bg-red text-white",
         release.progress === 0 && "motion-safe:animate-pulse",
       )}
@@ -76,7 +76,9 @@ export function EstopButton() {
         style={{ width: `${release.progress * 100}%` }}
       />
       <OctagonX size={14} className="relative" />
-      <span className="relative">E-STOP · hold to release</span>
+      <span className="relative">
+        E-STOP<span className="hidden @xl:inline"> · hold to release</span>
+      </span>
     </button>
   );
 }
