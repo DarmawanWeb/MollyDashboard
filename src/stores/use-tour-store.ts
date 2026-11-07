@@ -20,7 +20,7 @@ export interface TourStorePayload {
 }
 
 interface TourStore {
-  /** Current FSM state. Set by useTourController from /tour/state echoes. */
+  /** Current FSM state. Set by useTourSync from /tour/state echoes. */
   state: TourState;
 
   /** Saved tour being run, empty for an ad-hoc list of POIs. */

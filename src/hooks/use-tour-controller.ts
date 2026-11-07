@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { getRos, SERVICES, TOPICS } from "@/lib/ros";
 import {
   canTransition,
@@ -17,6 +17,7 @@ import { getMockRobot } from "@/mocks/mock-robot";
 import {
   createMockTourRunner,
   type MockTourResolver,
+  type MockTourRunner,
 } from "@/mocks/tour-runner";
 import { useRobotStore } from "@/stores/use-robot-store";
 import { toast } from "@/stores/use-toast-store";
@@ -96,75 +97,161 @@ const resolveMockTour: MockTourResolver = (cmd) => {
   };
 };
 
+/* ----------------------------------------------------------------------------
+ * Shared state
+ *
+ * One tour state machine for the whole app: the mock runner (offline) and
+ * the timers live here, not per component, so every caller of
+ * useTourController() talks to the same tour and navigating between pages
+ * never restarts it.
+ * ------------------------------------------------------------------------- */
+
+let mockRunner: MockTourRunner | null = null;
+let ackTimer: ReturnType<typeof setTimeout> | null = null;
+let restartTimer: ReturnType<typeof setTimeout> | null = null;
+
+function applySnapshot(snap: TourStateSnapshot): void {
+  // The robot confirmed a non-pending state: the in-flight command has
+  // landed (success or rejection), so the ack timeout is moot.
+  if (!isPending(snap.state) && ackTimer) {
+    clearTimeout(ackTimer);
+    ackTimer = null;
+  }
+  useTourStore.getState().__applySnapshot(snapshotToStorePayload(snap));
+}
+
+function clearTimers(): void {
+  if (ackTimer) clearTimeout(ackTimer);
+  if (restartTimer) clearTimeout(restartTimer);
+  ackTimer = null;
+  restartTimer = null;
+}
+
 /**
- * Wire the dashboard to the robot-side tour FSM.
- *
- * On mount:
- *   1. Subscribe to /tour/state and pipe into useTourStore
- *   2. Call /tour/get_state for initial snapshot (handles late-join)
- *   3. Start 1Hz client-side ticker for elapsed counter
- *
- * On unmount: tears down subscription, clears any pending timers, and
- * (in mock mode) shuts down the mock runner.
- *
- * Should be mounted exactly once at the top of the provider tree.
+ * Send a tour command: validate, set the optimistic state, send to the
+ * robot (or the mock runner), arm the ack timeout.
  */
-export function useTourController(): UseTourControllerResult {
-  const apply = useTourStore((s) => s.__applySnapshot);
-  const setOptimistic = useTourStore((s) => s.__setOptimistic);
-  const tick = useTourStore((s) => s.__tick);
-  const epoch = useRobotStore((s) => s.rosEpoch);
+function sendTourCommand(cmd: TourCommand, mock: boolean): boolean {
+  // Cancel any restart macro in progress when user issues a manual command.
+  if (restartTimer) {
+    clearTimeout(restartTimer);
+    restartTimer = null;
+  }
 
-  /** Stash latest store state in a ref so handlers don't recreate on every change. */
-  const latestStateRef = useRef(useTourStore.getState());
-  useEffect(() => {
-    const unsub = useTourStore.subscribe((s) => {
-      latestStateRef.current = s;
-    });
-    return unsub;
-  }, []);
+  const store = useTourStore.getState();
+  const current = store.state;
+  if (!canTransition(current, cmd.kind)) return false;
 
-  const ackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  try {
+    validateCommand(cmd);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[tour] invalid command:", err);
+    return false;
+  }
 
-  // Mock runner lifetime tied to mock mode being active.
-  const useMock = useMockMode();
-  const mockRef = useRef<ReturnType<typeof createMockTourRunner> | null>(null);
+  const optimistic = nextState(current, cmd.kind);
+  if (optimistic && optimistic !== current) store.__setOptimistic(optimistic);
 
-  /* ------------------------------------------------------------------------
-   * Reconciliation — clear pending-ack timer when robot confirms a state
-   *
-   * Defined BEFORE the subscription effect because that effect calls it.
-   * (Biome's useExhaustiveDependencies enforces declaration order.)
-   * --------------------------------------------------------------------- */
+  // Send — mock or real. The service answers at once; the state still
+  // arrives on /tour/state and wins.
+  if (mock) {
+    mockRunner?.sendCommand(cmd);
+  } else {
+    getRos()
+      .callService(SERVICES.TOUR_CONTROL, { command: encodeTourCommand(cmd) })
+      .then((res) => {
+        if (!res.success) {
+          toast.warn(`Tour ${cmd.kind.toLowerCase()} refused`, res.message);
+        }
+      })
+      .catch(() => {
+        // older robot without /tour/control: fall back to the topic
+        getRos().publish(TOPICS.TOUR_CMD, encodeTourCommand(cmd));
+      });
+  }
 
-  const reconcile = useCallback((snap: TourStateSnapshot) => {
-    // If robot confirmed a non-pending state, the in-flight command has
-    // landed (success or rejection) — clear the timeout.
-    if (!isPending(snap.state) && ackTimerRef.current) {
-      clearTimeout(ackTimerRef.current);
-      ackTimerRef.current = null;
+  // Arm ack timeout for pending states. The mock answers quickly, so the
+  // timeout effectively only matters with a real robot.
+  if (optimistic && isPending(optimistic)) {
+    if (ackTimer) clearTimeout(ackTimer);
+    ackTimer = setTimeout(() => {
+      ackTimer = null;
+      const latest = useTourStore.getState();
+      if (!isPending(latest.state)) return;
+      // still pending: the robot did not answer, show it failed
+      latest.__applySnapshot({
+        state: "ERROR",
+        tourId: latest.tourId,
+        tourName: latest.tourName,
+        currentPoiIndex: latest.currentPoiIndex,
+        totalPois: latest.totalPois,
+        activePoiId: latest.activePoiId,
+        activePoiName: latest.activePoiName,
+        activity: "",
+        message: "",
+        errorReason: "Robot did not acknowledge command in time",
+      });
+    }, ACK_TIMEOUT_MS);
+  }
+
+  return true;
+}
+
+/** STOP → wait for IDLE → START (the "Restart" button). */
+function restartTour(
+  startCmd: Extract<TourCommand, { kind: "START" }>,
+  mock: boolean,
+): void {
+  const current = useTourStore.getState().state;
+
+  // If already idle (or failed), just start.
+  if (current === "IDLE" || current === "ERROR") {
+    sendTourCommand(startCmd, mock);
+    return;
+  }
+
+  if (!sendTourCommand({ kind: "STOP" }, mock)) return;
+
+  const startedAt = Date.now();
+  const poll = () => {
+    restartTimer = null;
+    if (useTourStore.getState().state === "IDLE") {
+      sendTourCommand(startCmd, mock);
+      return;
     }
-  }, []);
+    if (Date.now() - startedAt > RESTART_MAX_WAIT_MS) return; // gave up
+    restartTimer = setTimeout(poll, RESTART_POLL_MS);
+  };
+  restartTimer = setTimeout(poll, RESTART_POLL_MS);
+}
 
-  /* ------------------------------------------------------------------------
-   * Wire up state stream (real or mocked)
-   * --------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------------
+ * Hooks
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Wire the dashboard to the robot-side tour FSM. Mount exactly once, at the
+ * top of the provider tree (TourController):
+ *   1. subscribe to /tour/state (or run the mock tour offline) into useTourStore
+ *   2. call /tour/get_state for the initial snapshot (late join)
+ *   3. tick the client-side elapsed counter
+ */
+export function useTourSync(): void {
+  const useMock = useMockMode();
+  const epoch = useRobotStore((s) => s.rosEpoch);
 
   useEffect(() => {
     if (useMock) {
-      // Mock path: create local FSM that responds to commands sent via
-      // sendCommand (see below). Subscription emits initial state immediately.
-      if (mockRef.current) mockRef.current.shutdown();
-      mockRef.current = createMockTourRunner(resolveMockTour);
-      const unsub = mockRef.current.subscribe((snap) => {
-        reconcile(snap);
-        apply(snapshotToStorePayload(snap));
-      });
+      // one mock FSM that answers the commands of every page
+      mockRunner?.shutdown();
+      const runner = createMockTourRunner(resolveMockTour);
+      mockRunner = runner;
+      const unsub = runner.subscribe(applySnapshot);
       return () => {
         unsub();
-        mockRef.current?.shutdown();
-        mockRef.current = null;
+        runner.shutdown();
+        if (mockRunner === runner) mockRunner = null;
       };
     }
 
@@ -172,183 +259,54 @@ export function useTourController(): UseTourControllerResult {
     // call is in flight, then bootstrap with a snapshot.
     void epoch; // re-subscribe on a rebuilt client
     const ros = getRos();
-    const handleWire = (wire: TourStateWire) => {
-      const snap = decodeTourState(wire);
-      reconcile(snap);
-      apply(snapshotToStorePayload(snap));
-    };
-    const unsub = ros.subscribe(TOPICS.TOUR_STATE, handleWire);
+    const unsub = ros.subscribe(TOPICS.TOUR_STATE, (wire: TourStateWire) =>
+      applySnapshot(decodeTourState(wire)),
+    );
 
     ros
       .callService(SERVICES.TOUR_GET_STATE, {})
       .then((res) => {
-        if (!res?.state) return;
-        const snap = decodeTourState(res.state);
-        reconcile(snap);
-        apply(snapshotToStorePayload(snap));
+        if (res?.state) applySnapshot(decodeTourState(res.state));
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
         console.warn("[tour] get_state snapshot failed:", err);
       });
 
-    return () => {
-      unsub();
-    };
-  }, [useMock, epoch, apply, reconcile]);
-
-  /* ------------------------------------------------------------------------
-   * Client-side elapsed-time ticker
-   * --------------------------------------------------------------------- */
+    return unsub;
+  }, [useMock, epoch]);
 
   useEffect(() => {
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [tick]);
+    const id = setInterval(() => useTourStore.getState().__tick(), 1000);
+    return () => {
+      clearInterval(id);
+      clearTimers();
+    };
+  }, []);
+}
 
-  /* ------------------------------------------------------------------------
-   * Command sending
-   * --------------------------------------------------------------------- */
+/**
+ * Tour commands for any component. Every caller shares the one tour that
+ * useTourSync runs; calling this hook starts nothing by itself.
+ */
+export function useTourController(): UseTourControllerResult {
+  const useMock = useMockMode();
+  const state = useTourStore((s) => s.state);
 
   const sendCommand = useCallback(
-    (cmd: TourCommand): boolean => {
-      // Cancel any restart macro in progress when user issues a manual command.
-      if (restartTimerRef.current) {
-        clearTimeout(restartTimerRef.current);
-        restartTimerRef.current = null;
-      }
-
-      const current = latestStateRef.current.state;
-      if (!canTransition(current, cmd.kind)) {
-        return false;
-      }
-
-      try {
-        validateCommand(cmd);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error("[tour] invalid command:", err);
-        return false;
-      }
-
-      const optimistic = nextState(current, cmd.kind);
-      if (optimistic && optimistic !== current) {
-        setOptimistic(optimistic);
-      }
-
-      // Send — mock or real. The service answers at once; the state still
-      // arrives on /tour/state and wins.
-      if (useMock) {
-        mockRef.current?.sendCommand(cmd);
-      } else {
-        getRos()
-          .callService(SERVICES.TOUR_CONTROL, {
-            command: encodeTourCommand(cmd),
-          })
-          .then((res) => {
-            if (!res.success) {
-              toast.warn(`Tour ${cmd.kind.toLowerCase()} refused`, res.message);
-            }
-          })
-          .catch(() => {
-            // older robot without /tour/control: fall back to the topic
-            getRos().publish(TOPICS.TOUR_CMD, encodeTourCommand(cmd));
-          });
-      }
-
-      // Arm ack timeout for pending states. Mock will respond quickly so
-      // the timeout effectively only matters in real mode.
-      if (optimistic && isPending(optimistic)) {
-        if (ackTimerRef.current) clearTimeout(ackTimerRef.current);
-        ackTimerRef.current = setTimeout(() => {
-          ackTimerRef.current = null;
-          // If we're still pending after the timeout, robot didn't respond.
-          // Mark as ERROR so user sees something failed.
-          const latest = latestStateRef.current;
-          if (isPending(latest.state)) {
-            apply({
-              state: "ERROR",
-              tourId: latest.tourId,
-              tourName: latest.tourName,
-              currentPoiIndex: latest.currentPoiIndex,
-              totalPois: latest.totalPois,
-              activePoiId: latest.activePoiId,
-              activePoiName: latest.activePoiName,
-              activity: "",
-              message: "",
-              errorReason: "Robot did not acknowledge command in time",
-            });
-          }
-        }, ACK_TIMEOUT_MS);
-      }
-
-      return true;
-    },
-    [apply, setOptimistic, useMock],
+    (cmd: TourCommand) => sendTourCommand(cmd, useMock),
+    [useMock],
   );
-
-  /* ------------------------------------------------------------------------
-   * Restart macro: STOP → wait for IDLE → START
-   * --------------------------------------------------------------------- */
-
   const restart = useCallback(
-    (startCmd: Extract<TourCommand, { kind: "START" }>) => {
-      const current = latestStateRef.current.state;
-
-      // If already idle, just start. If error, also just start.
-      if (current === "IDLE" || current === "ERROR") {
-        sendCommand(startCmd);
-        return;
-      }
-
-      // Otherwise stop first, then poll for IDLE.
-      const stopped = sendCommand({ kind: "STOP" });
-      if (!stopped) return;
-
-      const startedAt = Date.now();
-      const poll = () => {
-        restartTimerRef.current = null;
-        if (latestStateRef.current.state === "IDLE") {
-          sendCommand(startCmd);
-          return;
-        }
-        if (Date.now() - startedAt > RESTART_MAX_WAIT_MS) {
-          // give up — robot didn't reach IDLE
-          return;
-        }
-        restartTimerRef.current = setTimeout(poll, RESTART_POLL_MS);
-      };
-      restartTimerRef.current = setTimeout(poll, RESTART_POLL_MS);
-    },
-    [sendCommand],
+    (startCmd: Extract<TourCommand, { kind: "START" }>) =>
+      restartTour(startCmd, useMock),
+    [useMock],
   );
-
-  /* ------------------------------------------------------------------------
-   * Cleanup on unmount
-   * --------------------------------------------------------------------- */
-
-  useEffect(
-    () => () => {
-      if (ackTimerRef.current) clearTimeout(ackTimerRef.current);
-      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-    },
-    [],
-  );
-
-  /* ------------------------------------------------------------------------
-   * Exposed API
-   * --------------------------------------------------------------------- */
-
   const canSend = useCallback(
     (kind: TourCommand["kind"]) =>
-      canTransition(latestStateRef.current.state, kind),
+      canTransition(useTourStore.getState().state, kind),
     [],
   );
 
-  return {
-    sendCommand,
-    isPending: isPending(latestStateRef.current.state),
-    restart,
-    canSend,
-  };
+  return { sendCommand, isPending: isPending(state), restart, canSend };
 }
