@@ -24,14 +24,25 @@ All notable changes to this project are documented here. The format follows
 - Indosat Ooredoo Hutchison and Ezra Robotics logo slots (`public/brand/`, docs/BRANDING.md)
   and credits in the footers.
 - Settings: AI Assistant (answer engine, spoken answers, history) and Appearance sections.
+- One frame for every page: a sidebar (Showcase, Monitor, Mapping, System, Settings; Molly's
+  status; partners) that collapses to icons (Ctrl/⌘ B) and opens as a drawer on phones, and
+  one top bar in the same place on every page. Pages fade in; nothing else reloads.
+- Presentation mode for the TV: no operator chrome, full screen, scaled to the screen, idle
+  pointer hidden; leave with Esc or by holding the exit button; `?present=1` for kiosks.
 
 ### Changed
 - Navigation, site, POI, mapping, path finder and visitor types are `dharma_interfaces` (Molly
   1.0.0 runs on the Dharma packages); tour and speech types stay `molly_interfaces`.
-- `/` is the visitor display (it redirected to `/monitor`); the operator pages have a new header
-  with the logos, pill tabs, a Display button and the theme toggle.
+- `/` is the visitor display (it redirected to `/monitor`).
+- Operator pages as cards in responsive grids (container queries); settings, toasts, stats,
+  resource bars and the connection notice restyled.
 - New look: Plus Jakarta Sans, rounded cards and controls, light / dark design tokens.
 - The demo robot's POIs have descriptions and it gives short canned answers.
+
+### Fixed
+- Switching pages no longer restarts the tour, the robot connection or the chat: the providers
+  live in one shared layout, and every `useTourController()` drives the same tour instead of
+  creating its own mock runner.
 
 ### Removed
 - The Control page (drive pad, AUTO / REMOTE, stand / sit, gaits), teleop and its settings:

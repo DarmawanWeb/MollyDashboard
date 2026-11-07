@@ -167,8 +167,9 @@ the singleton when the URL or namespace changes and the sync hooks re-subscribe.
 
 ## Adding a New Page
 
-1. Create `src/app/(dashboard)/<name>/page.tsx`
-2. Create `src/app/(dashboard)/<name>/error.tsx`:
+1. Create `src/app/(app)/<name>/page.tsx`; give its root
+   `flex min-h-0 flex-1 flex-col` (and its own `overflow-y-auto`), since the shell sizes it
+2. Create `src/app/(app)/<name>/error.tsx`:
    ```tsx
    "use client";
    import { RouteError } from "@/components/error";
@@ -176,7 +177,8 @@ the singleton when the URL or namespace changes and the sync hooks re-subscribe.
      return <RouteError {...props} route="Name" />;
    }
    ```
-3. Add it to the operator navigation in `src/constants/tabs.ts`.
+3. Add it to `NAV_SECTIONS` in `src/constants/nav.ts` (sidebar entry, top bar title and
+   subtitle).
 
 ## Performance Tips
 

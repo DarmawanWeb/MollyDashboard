@@ -7,9 +7,9 @@ High-level map of the dashboard's modules and how data flows between them.
 ```
 src/
 ├── app/                      Next.js App Router routes
-│   ├── (display)/            `/`: the visitor display (AppProviders + Showcase)
-│   ├── (dashboard)/          operator pages
-│   │   ├── layout.tsx        OperatorShell (providers, header, footer, toasts)
+│   ├── (app)/                every page, in one shell
+│   │   ├── layout.tsx        AppShell: providers, sidebar, top bar, footer, toasts
+│   │   ├── page.tsx          `/`: the visitor display (Showcase)
 │   │   ├── monitor/          tour, walk-to, speech, visitors, Ask Molly
 │   │   ├── mapping/          sites, mapping, localization, POI + tour editors
 │   │   ├── system/           health, nodes, /rosout logs
@@ -18,24 +18,27 @@ src/
 │   │   ├── chat/             LLM gateway: status (GET), ask + stream (POST)
 │   │   └── conversations/    shared conversation history
 │   ├── globals.css           Tailwind + light / dark tokens + reduced-motion
-│   └── layout.tsx            Root HTML, fonts, theme init script, ThemeProvider
+│   └── layout.tsx            Root HTML, fonts, theme + shell init scripts, ThemeProvider
 │
 ├── components/
 │   ├── brand/                CompanyLogo, PartnerLockup, Credits
-│   ├── display/              visitor display: Showcase, header, hero camera + captions,
-│   │                         stat tiles, tour journey, location map, chat + history,
+│   ├── display/              visitor display: Showcase, hero camera + captions, stat tiles,
+│   │                         tour journey, location map, chat + history, header widgets,
 │   │                         daily stats tracker, demo autopilot
 │   ├── error/                ErrorBoundary, RouteError
 │   ├── feedback/             Toast viewport, ConnectionBanner
-│   ├── layout/               OperatorShell, Header (tabs, e-stop), Footer, AppSidebar, AppSection
+│   ├── layout/               AppSection (card), AppSidebar (column of cards), EstopButton
 │   ├── map/                  OccupancyCanvas, RobotMap + renderers (pure) + palettes + hooks
 │   ├── providers/            Theme, Connection, Simulation, RosSync, TourController, Conversation
 │   ├── robot/                ActivityBadge, CameraFeed, Stat
+│   ├── shell/                AppShell, Sidebar (+ robot card, tooltips), TopBar
+│   │                         (ShowcaseBar / OperatorBar), footer, presentation controls,
+│   │                         ShellEffects (prefs, shortcuts, fullscreen, idle pointer)
 │   ├── skeleton/             Loading placeholders
 │   ├── theme/                ThemeToggle, ThemeSwitcher
 │   └── ui/molly/             Form primitives (Button, ConfirmButton, Field, …)
 │
-├── constants/                Brand, tabs, activity styles, gestures
+├── constants/                Brand, navigation, activity styles, gestures
 │
 ├── hooks/
 │   ├── use-robot-api         RobotApi for the current mode (live or mock)
@@ -49,6 +52,9 @@ src/
 │   ├── use-display-mode      live / demo / offline for the display
 │   ├── use-caption           live caption of what Molly says
 │   ├── use-theme             light / dark / system
+│   ├── use-ui-prefs          sidebar / presentation preferences (saved per browser)
+│   ├── use-presentation      enter / leave presentation mode, fullscreen
+│   ├── use-idle-cursor       pointer resting (hidden while presenting)
 │   ├── use-ros-map           /map with the mock grid offline
 │   ├── use-hydrated          false while server HTML hydrates
 │   ├── use-draft             local edit of a stored value
@@ -74,6 +80,7 @@ src/
 │   ├── tour/                 FSM pure logic + wire codec
 │   ├── map/                  frame helpers (base_link → map)
 │   ├── theme.ts              theme storage, resolve, no-flash init script
+│   ├── ui-prefs.ts           shell preferences on <html>, no-flash init script
 │   └── utils.ts              cn() (clsx + tailwind-merge)
 │
 ├── server/                   Server only (route handlers, server components)
@@ -99,6 +106,7 @@ src/
 │   ├── use-tour-store        tour state mirror
 │   ├── use-toast-store       toasts
 │   ├── use-theme-store       light / dark
+│   ├── use-ui-store          sidebar, presentation mode, mobile drawer
 │   ├── use-display-store     display language, spoken answers (persisted)
 │   ├── use-daily-stats-store today's tours and distance (persisted)
 │   └── use-settings-store    (persisted to localStorage, versioned)
@@ -130,18 +138,22 @@ cycles.
 ## Provider Tree
 
 ```
-RootLayout                     theme init script (no flash), ThemeProvider
-├─ DisplayLayout (/)           AppProviders → Showcase
-└─ DashboardLayout             OperatorShell → AppProviders → header, page, footer
-
-AppProviders
-└─ ConnectionProvider          opens rosbridge with the saved URL + namespace
-   └─ SimulationLayer          mock robot → stores while offline / USE_MOCKS
-      └─ RosSyncLayer          robot topics → stores while connected
-         └─ TourController     /tour/state + /tour/get_state, tour commands
-            └─ ConversationLayer  history load + poll, LLM status
-               └─ {children}   route content
+RootLayout                     theme + shell init scripts (no flash), ThemeProvider
+└─ AppLayout (every page)      AppShell
+   └─ AppProviders             mounted once: navigating keeps all of it running
+      └─ ConnectionProvider          opens rosbridge with the saved URL + namespace
+         └─ SimulationLayer          mock robot → stores while offline / USE_MOCKS
+            └─ RosSyncLayer          robot topics → stores while connected
+               └─ TourController     useTourSync: /tour/state (or the mock tour)
+                  └─ ConversationLayer  history load + poll, LLM status
+                     ├─ ShellEffects    prefs on <html>, Ctrl/⌘ B, Esc, fullscreen, stats
+                     ├─ Sidebar · TopBar · footer · toasts
+                     └─ {children}      the page, faded in on navigation
 ```
+
+There is one tour state machine for the app: `useTourSync` (mounted once) owns the
+subscription or the mock runner, and every `useTourController()` sends commands to it, so a
+tour started on one page keeps running on the next.
 
 The visitor display reads the same stores but decides for itself what to show
 (`useDisplayMode`): `live` with a robot, `demo` on a `USE_MOCKS` build (with a demo autopilot
@@ -254,6 +266,16 @@ every screen ◄── GET /api/conversations?since= (4 s poll) ── shared hi
 ```
 
 See [ASSISTANT.md](ASSISTANT.md).
+
+## Shell Preferences
+
+`html[data-sidebar="collapsed"]` and `html[data-presentation="on"]` are set before the first
+paint from `localStorage` (`lib/ui-prefs.ts`), so a kiosk reload never flashes the sidebar.
+Tailwind variants follow them: `sb-collapsed:` (icon-only sidebar) and `presenting:` (no
+operator chrome). Presentation mode only applies on `/`, and scales the root font size with
+the screen there; elsewhere rem stays 16px, so the shell keeps its size between pages. Page
+layouts use container queries (`@container`, `@5xl:` …), not the viewport, because the space
+next to the sidebar is what they get.
 
 ## Theme
 

@@ -14,7 +14,8 @@ The robot side is [DarmawanRobotics/Molly](https://github.com/DarmawanRobotics/M
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  Dashboard (this repo)                               │
+│  Dashboard (this repo): sidebar + top bar on every   │
+│  page, presentation mode for the TV                  │
 │  ├─ /           visitor display: camera + captions,  │
 │  │              map, tour journey, stats, Ask Molly  │
 │  ├─ /monitor    tour, walk-to, speech, visitors, chat│
@@ -66,12 +67,25 @@ Bahasa Indonesia or English (toggle in the header), light or dark.
   and out loud. Questions asked to the robot in person show up too. **History** lists every
   conversation, grouped by day, with a search.
 
-The display scales with the screen (a 1080p TV fills edge to edge) and stacks on tablets and
-phones. When a production build cannot reach the robot it says Molly is taking a break
-instead of showing made-up data. The operator pages are one tap away (footer, "Operator").
+The display adapts to the width it gets: three columns that fill the screen, two that scroll
+next to an open sidebar on a laptop, one on a phone. When a production build cannot reach the
+robot it says Molly is taking a break instead of showing made-up data.
 
-For a kiosk: run Chrome with `--kiosk http://<server>:4470/`, or double-click "Molly" in the
-header to go full screen; the mouse pointer hides after a few idle seconds.
+## Navigation and Presentation Mode
+
+Every page shares one frame: a **sidebar** on the left (Showcase for visitors; Monitor,
+Mapping, System and Settings for the operator; Molly's status and the partners at the bottom)
+and a **top bar** in the same place on every page. Navigating keeps the robot connection, the
+tour and the chat running; only the page content changes.
+
+- **Collapse** the sidebar to icons with the button on its edge or **Ctrl/⌘ B** (remembered per
+  browser). On phones and tablets the **☰** button at the top left opens it as a drawer.
+- **Presentasi / Present** in the Showcase top bar hides the sidebar and operator controls and
+  goes full screen, scaled for the TV; the mouse pointer hides when it rests. **Esc**, or
+  **holding** the ⤡ button at the top right, leaves it; a tap alone does not, so visitors can't
+  drop into the operator pages.
+- **Kiosk:** open `http://<server>:4470/?present=1` (e.g. `chrome --kiosk …`) to start in
+  presentation mode; it is remembered, and `?present=0` turns it off.
 
 ## Ask Molly: the LLM Gateway
 
@@ -156,7 +170,7 @@ venue's network (or behind the tunnel's access policy).
 | `/system` | Health (CPU / GPU / RAM / temperature, topic rates, issues), ROS nodes, `/rosout` log viewer |
 | `/settings` | rosbridge / camera URLs, robot namespace, camera stream, AI assistant and history, walking speed, speech defaults and quick phrases, theme |
 
-The software e-stop sits in the operator header on every page: one press engages it, releasing
+The software e-stop sits in the top bar of every operator page: one press engages it, releasing
 needs a one-second hold. Driving, AUTO / REMOTE and posture are done with the handheld remote.
 
 ## Robot Contract
