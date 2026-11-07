@@ -8,22 +8,18 @@ import { type Toast, useToastStore } from "@/stores/use-toast-store";
 const KIND_STYLES = {
   info: {
     icon: Info,
-    border: "border-l-cyan",
     iconClass: "text-cyan",
   },
   success: {
     icon: CheckCircle2,
-    border: "border-l-green",
     iconClass: "text-green",
   },
   warn: {
     icon: AlertTriangle,
-    border: "border-l-amber",
     iconClass: "text-amber",
   },
   error: {
     icon: XCircle,
-    border: "border-l-red",
     iconClass: "text-red",
   },
 } as const;
@@ -58,17 +54,24 @@ export function ToastItem({ toast }: Props) {
         toast.kind === "error" || toast.kind === "warn" ? "assertive" : "polite"
       }
       className={cn(
-        "panel border-l-2 px-3 py-2.5 pr-8 relative flex gap-2",
-        "motion-safe:animate-fade-in",
-        "w-80",
-        style.border,
+        "relative flex w-80 gap-3 rounded-2xl border border-border-subtle bg-mol-secondary px-3.5 py-3 pr-9 shadow-card-lg",
+        "motion-safe:animate-rise-in",
       )}
     >
-      <Icon size={14} className={cn("shrink-0 mt-0.5", style.iconClass)} />
-      <div className="min-w-0 flex-1">
-        <div className="text-xs text-txt-primary truncate">{toast.title}</div>
+      <span
+        className={cn(
+          "grid size-8 shrink-0 place-items-center rounded-lg bg-mol-tertiary",
+          style.iconClass,
+        )}
+      >
+        <Icon size={16} />
+      </span>
+      <div className="min-w-0 flex-1 self-center">
+        <div className="truncate text-sm font-semibold text-txt-primary">
+          {toast.title}
+        </div>
         {toast.description && (
-          <div className="text-[10px] text-txt-tertiary mt-0.5 break-words">
+          <div className="mt-0.5 break-words text-xs text-txt-tertiary">
             {toast.description}
           </div>
         )}
@@ -77,9 +80,9 @@ export function ToastItem({ toast }: Props) {
         type="button"
         onClick={() => dismiss(toast.id)}
         aria-label="Dismiss notification"
-        className="absolute top-1.5 right-1.5 text-txt-muted hover:text-txt-primary p-1"
+        className="absolute top-2 right-2 rounded-md p-1 text-txt-muted hover:bg-mol-tertiary hover:text-txt-primary"
       >
-        <X size={11} />
+        <X size={13} />
       </button>
     </div>
   );

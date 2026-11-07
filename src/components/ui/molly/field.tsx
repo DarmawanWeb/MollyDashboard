@@ -47,7 +47,7 @@ export function MollyField({
       {(hint || error) && (
         <span
           className={cn(
-            "text-[10px] font-mono mt-0.5",
+            "mt-0.5 text-[11px]",
             error ? "text-red" : "text-txt-muted",
           )}
         >

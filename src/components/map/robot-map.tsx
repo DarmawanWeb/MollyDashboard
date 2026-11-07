@@ -122,7 +122,7 @@ function MapStrip({
   grid: OccupancyGrid | null;
 }) {
   return (
-    <div className="absolute bottom-3 right-3 flex items-center gap-2 font-mono text-[10px] text-txt-muted pointer-events-none">
+    <div className="pointer-events-none absolute right-3 bottom-3 hidden items-center gap-2 font-mono text-[10px] text-txt-muted md:flex">
       {mapping && <span className="text-violet">● mapping</span>}
       <span>
         {pose

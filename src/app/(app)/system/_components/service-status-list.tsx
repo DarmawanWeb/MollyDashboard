@@ -42,13 +42,13 @@ export default function ServiceStatusList() {
   const topics = Object.entries(health?.topics ?? {});
 
   return (
-    <div className="p-3 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Activity size={14} />
           <span className="label text-xs">Health</span>
           <div className="flex-1" />
-          <div className={cn("w-2 h-2", level.dot)} />
+          <div className={cn("size-2 rounded-full", level.dot)} />
           <span className={cn("font-mono text-[10px] uppercase", level.text)}>
             {health?.level ?? "unknown"}
           </span>
@@ -114,7 +114,7 @@ export default function ServiceStatusList() {
           {nodes.map((node) => (
             <div
               key={node}
-              className="font-mono text-[11px] text-txt-secondary px-2 py-0.5 border-l-2 border-green/40"
+              className="rounded-md px-2 py-1 font-mono text-[11px] text-txt-secondary even:bg-mol-tertiary/60"
             >
               {node}
             </div>

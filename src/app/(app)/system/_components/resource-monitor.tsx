@@ -1,6 +1,6 @@
 "use client";
 
-import { Cpu, HardDrive, Thermometer } from "lucide-react";
+import { HardDrive, Thermometer } from "lucide-react";
 import { useSystemStore } from "@/stores/use-system-store";
 import ResourceBar from "./resource-bar";
 
@@ -13,12 +13,7 @@ export default function ResourceMonitor() {
   const health = useSystemStore((s) => s.health);
 
   return (
-    <div className="p-3 border-b border-border-subtle">
-      <div className="flex items-center gap-2 mb-3">
-        <Cpu size={14} />
-        <span className="label text-xs">Resource Monitor</span>
-      </div>
-
+    <div>
       {!health ? (
         <div className="text-xs text-txt-muted py-2">
           Waiting for /health/status…
@@ -30,7 +25,7 @@ export default function ResourceMonitor() {
             value={round1(health.cpuPercent ?? 0)}
             max={100}
             unit="%"
-            color="#22d3ee"
+            barClassName="bg-cyan"
           />
           {health.gpuPercent !== null && (
             <ResourceBar
@@ -38,7 +33,7 @@ export default function ResourceMonitor() {
               value={round1(health.gpuPercent)}
               max={100}
               unit="%"
-              color="#8b5cf6"
+              barClassName="bg-violet"
             />
           )}
           <ResourceBar
@@ -46,20 +41,20 @@ export default function ResourceMonitor() {
             value={round1(health.memoryUsedGb ?? 0)}
             max={round1(health.memoryTotalGb ?? 0) || 1}
             unit=" GB"
-            color="#f59e0b"
+            barClassName="bg-amber"
           />
 
           <div className="grid grid-cols-2 gap-1.5 mt-2">
             <div className="panel-inset px-3 py-2">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Thermometer size={11} />
+              <div className="flex items-center gap-1.5 mb-1 text-txt-tertiary">
+                <Thermometer size={12} />
                 <span className="label">Hottest zone</span>
               </div>
               <span
                 className={
                   (health.cpuTempC ?? 0) > 70
-                    ? "text-red"
-                    : "text-txt-secondary"
+                    ? "text-sm font-bold text-red"
+                    : "text-sm font-bold text-txt-primary"
                 }
               >
                 {health.cpuTempC === null ? "—" : `${health.cpuTempC}°C`}
@@ -67,11 +62,11 @@ export default function ResourceMonitor() {
             </div>
 
             <div className="panel-inset px-3 py-2">
-              <div className="flex items-center gap-1.5 mb-1">
-                <HardDrive size={11} />
+              <div className="flex items-center gap-1.5 mb-1 text-txt-tertiary">
+                <HardDrive size={12} />
                 <span className="label">Disk free</span>
               </div>
-              <span className="text-txt-secondary">
+              <span className="text-sm font-bold text-txt-primary">
                 {health.diskFreeGb === null ? "—" : `${health.diskFreeGb} GB`}
               </span>
             </div>

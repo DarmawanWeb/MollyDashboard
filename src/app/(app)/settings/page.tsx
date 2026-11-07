@@ -7,18 +7,11 @@ import { InteractionSection } from "./_components/interaction-section";
 import { MotionSection } from "./_components/motion-section";
 import { VideoSection } from "./_components/video-section";
 
+/** Connection and preferences, saved in this browser (the LLM is set on the server). */
 export default function SettingsPage() {
   return (
-    <div className="w-full overflow-y-auto p-6">
-      <header className="mb-6">
-        <h2 className="mb-0.5 text-lg font-bold">Settings</h2>
-        <p className="text-[13px] text-txt-tertiary">
-          Connection to the robot and dashboard preferences, saved in this
-          browser. The LLM is configured on the dashboard server.
-        </p>
-      </header>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div className="@container flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="grid grid-cols-1 gap-3 p-3 lg:gap-4 lg:p-4 @4xl:grid-cols-2">
         <ConnectionSection />
         <AssistantSection />
         <VideoSection />

@@ -130,12 +130,17 @@ export default function LogViewer() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="h-10 border-b border-border-subtle flex items-center gap-3 px-4 bg-mol-secondary shrink-0">
-        <Activity size={14} className="text-cyan" aria-hidden="true" />
-        <span className="label">System Logs</span>
-        <span className="font-mono text-[10px] text-txt-muted ml-1">
-          ({filtered.length})
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border-subtle px-4 py-3">
+        <span
+          aria-hidden="true"
+          className="grid size-8 place-items-center rounded-lg bg-brand/10 text-brand"
+        >
+          <Activity className="size-4" />
+        </span>
+        <h3 className="text-sm font-bold">Logs</h3>
+        <span className="rounded-full bg-mol-tertiary px-2 py-0.5 text-[11px] font-semibold tabular-nums text-txt-tertiary">
+          {filtered.length}
         </span>
         <div className="flex-1" />
 
@@ -191,7 +196,7 @@ export default function LogViewer() {
             {visibleLogs.map((l) => (
               <div
                 key={l.id}
-                className="flex items-center gap-3 px-2 hover:bg-mol-secondary transition-colors border-b border-border-subtle/30 h-(--row-height)"
+                className="flex items-center gap-3 px-4 hover:bg-mol-tertiary transition-colors border-b border-border-subtle/40 h-(--row-height)"
               >
                 <span className="text-txt-muted w-20 shrink-0">
                   {l.timestamp}

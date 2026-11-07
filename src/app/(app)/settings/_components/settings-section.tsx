@@ -4,30 +4,38 @@ import { cn } from "@/lib/utils";
 interface Props {
   icon: ReactNode;
   title: string;
-  /** Tailwind color class for the icon (e.g. "text-cyan", "text-violet") */
+  /** Text color class of the icon (e.g. "text-cyan", "text-violet") */
   iconColor?: string;
   children: ReactNode;
   className?: string;
 }
 
-/**
- * Standard panel wrapper for each Settings section.
- *
- * Replaces the inline <Section> component duplicated in settings/page.tsx
- * and the older _components/section.tsx.
- */
+/** A card of the Settings page. */
 export function SettingsSection({
   icon,
   title,
-  iconColor = "text-cyan",
+  iconColor = "text-brand",
   children,
   className,
 }: Props) {
   return (
-    <section className={cn("panel p-5", className)}>
-      <header className="flex items-center gap-2.5 mb-4">
-        <span className={iconColor}>{icon}</span>
-        <h3 className="text-sm font-bold">{title}</h3>
+    <section
+      className={cn(
+        "rounded-2xl border border-border-subtle bg-mol-secondary p-5 shadow-card",
+        className,
+      )}
+    >
+      <header className="mb-4 flex items-center gap-2.5">
+        <span
+          aria-hidden
+          className={cn(
+            "grid size-9 place-items-center rounded-xl bg-mol-tertiary [&>svg]:size-[1.1rem]",
+            iconColor,
+          )}
+        >
+          {icon}
+        </span>
+        <h3 className="text-[0.95rem] font-bold">{title}</h3>
       </header>
 
       <div>{children}</div>

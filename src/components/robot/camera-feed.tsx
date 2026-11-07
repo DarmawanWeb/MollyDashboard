@@ -38,7 +38,7 @@ export function CameraFeed({
   return (
     <div
       className={cn(
-        "relative w-full h-35 overflow-hidden border-border-subtle border bg-mol-root",
+        "relative aspect-video w-full overflow-hidden rounded-xl border border-border-subtle bg-mol-tertiary",
         className,
       )}
     >

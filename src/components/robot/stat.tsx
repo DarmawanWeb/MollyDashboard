@@ -13,18 +13,18 @@ interface StatProps {
 /** One labelled value in the robot status grids. */
 export function Stat({ icon, label, value, tone, hint }: StatProps) {
   return (
-    <div className="panel-inset px-3 py-2">
-      <div className="flex items-center gap-1.5 mb-1">
+    <div className="min-w-0 rounded-xl bg-mol-tertiary px-3 py-2.5">
+      <div className="mb-1 flex items-center gap-1.5 text-txt-tertiary">
         {icon && (
-          <span aria-hidden className="text-txt-muted">
+          <span aria-hidden className="shrink-0">
             {icon}
           </span>
         )}
-        <span className="label">{label}</span>
+        <span className="truncate text-[11px] font-semibold">{label}</span>
       </div>
       <div
         className={cn(
-          "font-mono text-sm font-bold truncate",
+          "truncate text-sm font-bold tabular-nums",
           tone ?? "text-txt-primary",
         )}
         title={hint ?? value}

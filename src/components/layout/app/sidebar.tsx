@@ -1,25 +1,27 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
+/**
+ * A column of cards on an operator page. In the wide layout it fills the
+ * page height and scrolls on its own; narrow, it stacks with the page.
+ */
 export function AppSidebar({
   children,
-  side = "right",
-  width = "w-[320px]",
+  className,
 }: {
   children: ReactNode;
-  side?: "left" | "right";
-  width?: string;
+  className?: string;
 }) {
   return (
-    <aside
-      className={[
-        width,
-        "shrink-0 flex flex-col overflow-y-auto bg-mol-primary",
-        side === "left"
-          ? "border-r border-border-subtle"
-          : "border-l border-border-subtle",
-      ].join(" ")}
+    <div
+      className={cn(
+        // cards keep their height; the column scrolls instead
+        "flex min-w-0 flex-col gap-3 lg:gap-4 [&>*]:shrink-0",
+        "@5xl:min-h-0 @5xl:overflow-y-auto @5xl:pb-1",
+        className,
+      )}
     >
-      <div className="flex flex-col">{children}</div>
-    </aside>
+      {children}
+    </div>
   );
 }
