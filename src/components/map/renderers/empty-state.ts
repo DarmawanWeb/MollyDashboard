@@ -9,7 +9,7 @@ export function drawEmptyState(
   cW: number,
   cH: number,
 ): void {
-  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  ctx.fillStyle = PALETTE.gridLine;
   for (let x = 0; x < cW; x += 24) ctx.fillRect(x, 0, 1, cH);
   for (let y = 0; y < cH; y += 24) ctx.fillRect(0, y, cW, 1);
 

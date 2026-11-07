@@ -11,8 +11,7 @@ import {
  * Draws 1m minor + 5m major grid lines aligned to world coordinates.
  *
  * Skipped when zoomed out far enough that grid lines would clutter or moiré.
- * Major lines (every 5m) use the cyan-tinted color from PALETTE to give a
- * subtle visual reference point.
+ * Major lines (every 5m) are a touch stronger, as a subtle reference.
  */
 export function drawGridLines(
   ctx: CanvasRenderingContext2D,

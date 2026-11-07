@@ -1,4 +1,5 @@
 import type { OccupancyGrid } from "@/types/ros";
+import { PALETTE } from "../palette";
 import { project, type Viewport } from "../projection";
 
 /**
@@ -31,7 +32,7 @@ export function drawTrail(
 
     const t = i / n; // 0 = oldest, 1 = newest
     ctx.globalAlpha = 0.05 + t * 0.55;
-    ctx.strokeStyle = "rgba(34,211,238,1)";
+    ctx.strokeStyle = PALETTE.robot;
     ctx.beginPath();
     ctx.moveTo(ax, ay);
     ctx.lineTo(bx, by);

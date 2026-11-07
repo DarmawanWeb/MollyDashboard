@@ -23,10 +23,14 @@ export interface CanvasPalette {
   occupied: Rgb;
   robot: string;
   robotGlow: string;
+  /** robot color at zero alpha, where the glow fades out */
+  robotClear: string;
   trail: string;
   poi: string;
   poiHalo: string;
   poiActive: string;
+  /** outline of the POI markers, against the floor */
+  poiStroke: string;
   path: string;
   goal: string;
   route: string;
@@ -41,60 +45,69 @@ export interface CanvasPalette {
   overlayBorder: string;
 }
 
-/** Blueprint look: dark floor, light walls. */
+/*
+ * A plain floor plan: neutral floor and walls, the accent for Molly and her
+ * path, gray stops (the active one in the accent), orange visitors.
+ */
+
+/** Dark floor, light gray walls. */
 const DARK: CanvasPalette = {
-  bg: "#0c1322",
-  gridLine: "rgba(148,163,196,0.05)",
-  gridLineMajor: "rgba(34,211,238,0.08)",
-  unknown: [12, 19, 34],
-  free: [24, 34, 56],
-  occupied: [156, 174, 210],
-  robot: "#22d3ee",
-  robotGlow: "rgba(34,211,238,0.45)",
-  trail: "rgba(34,211,238,0.55)",
-  poi: "#a78bfa",
-  poiHalo: "rgba(167,139,250,0.3)",
-  poiActive: "#22d3ee",
-  path: "rgba(34,211,238,0.85)",
+  bg: "#111215",
+  gridLine: "rgba(255,255,255,0.025)",
+  gridLineMajor: "rgba(255,255,255,0.05)",
+  unknown: [17, 18, 21],
+  free: [28, 29, 34],
+  occupied: [150, 153, 163],
+  robot: "#6e74f7",
+  robotGlow: "rgba(110,116,247,0.38)",
+  robotClear: "rgba(110,116,247,0)",
+  trail: "rgba(110,116,247,0.55)",
+  poi: "#c9cbd2",
+  poiHalo: "rgba(255,255,255,0.14)",
+  poiActive: "#6e74f7",
+  poiStroke: "rgba(12,13,16,0.9)",
+  path: "rgba(110,116,247,0.85)",
   goal: "#fbbf24",
-  route: "rgba(167,139,250,0.75)",
-  routeReturn: "rgba(167,139,250,0.45)",
-  routeNumber: "#ffffff",
+  route: "rgba(201,203,210,0.45)",
+  routeReturn: "rgba(201,203,210,0.25)",
+  routeNumber: "#0c0d10",
   visitor: "#fb923c",
-  visitorHalo: "rgba(251,146,60,0.25)",
+  visitorHalo: "rgba(251,146,60,0.22)",
   placement: "#34d399",
-  text: "#d9e2f2",
-  textMuted: "rgba(217,226,242,0.6)",
-  overlay: "rgba(9,14,26,0.82)",
+  text: "#f1f2f4",
+  textMuted: "rgba(241,242,244,0.55)",
+  overlay: "rgba(20,21,25,0.94)",
   overlayBorder: "rgba(255,255,255,0.08)",
 };
 
-/** Floor plan look: white floor, slate walls. */
+/** White floor, dark gray walls. */
 const LIGHT: CanvasPalette = {
-  bg: "#eef2f8",
-  gridLine: "rgba(15,23,42,0.04)",
-  gridLineMajor: "rgba(8,145,178,0.1)",
-  unknown: [226, 231, 240],
+  bg: "#f1f2f5",
+  gridLine: "rgba(17,19,24,0.035)",
+  gridLineMajor: "rgba(17,19,24,0.06)",
+  unknown: [241, 242, 245],
   free: [255, 255, 255],
-  occupied: [51, 65, 85],
-  robot: "#0891b2",
-  robotGlow: "rgba(8,145,178,0.35)",
-  trail: "rgba(8,145,178,0.5)",
-  poi: "#7c3aed",
-  poiHalo: "rgba(124,58,237,0.22)",
-  poiActive: "#0891b2",
-  path: "rgba(8,145,178,0.85)",
+  occupied: [74, 78, 89],
+  robot: "#4f46e5",
+  robotGlow: "rgba(79,70,229,0.28)",
+  robotClear: "rgba(79,70,229,0)",
+  trail: "rgba(79,70,229,0.5)",
+  poi: "#4a4e59",
+  poiHalo: "rgba(17,19,24,0.1)",
+  poiActive: "#4f46e5",
+  poiStroke: "rgba(255,255,255,0.95)",
+  path: "rgba(79,70,229,0.8)",
   goal: "#d97706",
-  route: "rgba(124,58,237,0.7)",
-  routeReturn: "rgba(124,58,237,0.4)",
+  route: "rgba(74,78,89,0.4)",
+  routeReturn: "rgba(74,78,89,0.22)",
   routeNumber: "#ffffff",
   visitor: "#ea580c",
-  visitorHalo: "rgba(234,88,12,0.18)",
-  placement: "#059669",
-  text: "#1e293b",
-  textMuted: "rgba(30,41,59,0.6)",
-  overlay: "rgba(255,255,255,0.92)",
-  overlayBorder: "rgba(15,23,42,0.1)",
+  visitorHalo: "rgba(234,88,12,0.16)",
+  placement: "#16a34a",
+  text: "#111318",
+  textMuted: "rgba(17,19,24,0.55)",
+  overlay: "rgba(255,255,255,0.95)",
+  overlayBorder: "rgba(17,19,24,0.1)",
 };
 
 /** Colors for the given theme (pure; use for cached drawings). */

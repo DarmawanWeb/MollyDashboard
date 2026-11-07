@@ -16,9 +16,9 @@ interface DrawPoisOptions {
  * the robot takes on arrival) and an optional label below.
  *
  * Visual states:
- *   - default:            purple, no halo
- *   - hover / selected:   purple, soft halo
- *   - active:             cyan, strong halo (matches robot color → suggests
+ *   - default:            gray, no halo
+ *   - hover / selected:   gray, soft halo
+ *   - active:             the accent, strong halo (the robot's color →
  *                         "this is where the robot is going / just was")
  *
  * Labels render when `showLabels` is true OR the POI is hovered/active.
@@ -62,8 +62,8 @@ export function drawPois(
     ctx.rotate(Math.PI / 4);
     ctx.fillStyle = color;
     ctx.fillRect(-s, -s, s * 2, s * 2);
-    ctx.strokeStyle = "rgba(0,0,0,0.5)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = PALETTE.poiStroke;
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(-s, -s, s * 2, s * 2);
     ctx.restore();
 

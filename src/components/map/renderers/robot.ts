@@ -28,17 +28,20 @@ export function drawRobot(
   const glowR = 12 + pulse * 8;
   const grad = ctx.createRadialGradient(px, py, 4, px, py, glowR);
   grad.addColorStop(0, PALETTE.robotGlow);
-  grad.addColorStop(1, "rgba(34,211,238,0)");
+  grad.addColorStop(1, PALETTE.robotClear);
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.arc(px, py, glowR, 0, Math.PI * 2);
   ctx.fill();
 
-  // solid disc
+  // solid disc with a thin outline, so it reads on any floor color
   ctx.fillStyle = PALETTE.robot;
+  ctx.strokeStyle = PALETTE.poiStroke;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(px, py, 5, 0, Math.PI * 2);
+  ctx.arc(px, py, 6, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
 
   // heading arrow — yaw is in ROS frame (CCW from +X). Y is flipped in
   // canvas, so we negate the sin component to point correctly.
