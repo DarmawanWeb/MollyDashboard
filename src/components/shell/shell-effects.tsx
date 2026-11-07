@@ -28,7 +28,8 @@ function modalOpen(): boolean {
  * - saved sidebar / presentation preferences, mirrored on <html>
  * - Ctrl/⌘ B collapses the sidebar; Esc closes the drawer or leaves
  *   presentation mode (as does leaving fullscreen)
- * - the drawer closes on navigation; the pointer hides while presenting
+ * - the drawer closes on navigation and on growing to desktop; the
+ *   pointer hides while presenting
  * - today's counters for the display, whatever page is open
  */
 export function ShellEffects() {
@@ -52,6 +53,17 @@ export function ShellEffects() {
     void pathname;
     setMobileNavOpen(false);
   }, [pathname]);
+
+  // the drawer is for phones and tablets: close it when the window grows
+  // past the breakpoint where the sidebar is part of the page (lg)
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 64rem)");
+    const onChange = () => {
+      if (desktop.matches) setMobileNavOpen(false);
+    };
+    desktop.addEventListener("change", onChange);
+    return () => desktop.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
