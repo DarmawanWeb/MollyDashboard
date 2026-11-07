@@ -17,31 +17,34 @@ import { cn } from "@/lib/utils";
 const buttonVariants = cva(
   cn(
     "inline-flex items-center justify-center gap-1.5",
-    "rounded-lg font-semibold",
+    "rounded-lg font-medium",
     "border cursor-pointer transition-colors outline-none",
-    "focus-visible:border-cyan",
+    "focus-visible:ring-2 focus-visible:ring-brand/30",
     "disabled:cursor-not-allowed disabled:opacity-50",
   ),
   {
     variants: {
       variant: {
         primary: cn(
-          "bg-cyan text-mol-root border-cyan",
-          "hover:bg-cyan-light",
+          "bg-brand text-on-brand border-brand",
+          "hover:bg-brand-light hover:border-brand-light",
           "disabled:bg-mol-tertiary disabled:text-txt-muted disabled:border-border-subtle disabled:opacity-100",
         ),
         ghost: cn(
-          "bg-transparent text-txt-secondary border-border-subtle",
+          "bg-mol-secondary text-txt-secondary border-border",
           "hover:bg-mol-tertiary hover:text-txt-primary",
         ),
-        danger: cn("bg-red/10 text-red border-red/25", "hover:bg-red/20"),
+        danger: cn(
+          "bg-mol-secondary text-red border-border",
+          "hover:border-red/40 hover:bg-red/5",
+        ),
         secondary: cn(
-          "bg-mol-tertiary text-txt-primary border-border-subtle",
+          "bg-mol-tertiary text-txt-primary border-transparent",
           "hover:bg-mol-elevated",
         ),
       },
       size: {
-        xs: "px-2 py-1 text-[10px]",
+        xs: "px-2 py-1 text-[11px]",
         sm: "px-3 py-1.5 text-xs",
         md: "px-4 py-2 text-xs",
         lg: "px-5 py-2.5 text-sm",

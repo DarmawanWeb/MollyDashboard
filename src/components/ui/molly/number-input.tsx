@@ -68,10 +68,10 @@ export function MollyNumberInput({
     <div
       className={cn(
         "flex items-stretch overflow-hidden rounded-lg border bg-mol-secondary",
-        "focus-within:border-cyan transition-colors",
+        "focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15 transition-colors",
         invalid
           ? "border-red focus-within:border-red"
-          : "border-border-subtle hover:border-border",
+          : "border-border hover:border-border-strong",
         disabled && "opacity-50",
         className,
       )}
@@ -83,11 +83,11 @@ export function MollyNumberInput({
         aria-label="Decrement"
         tabIndex={-1}
         className={cn(
-          "text-txt-tertiary hover:text-cyan hover:bg-mol-tertiary transition-colors",
+          "text-txt-tertiary hover:text-brand hover:bg-mol-tertiary transition-colors",
           "disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-txt-tertiary",
           "disabled:cursor-not-allowed",
           padding,
-          "border-r border-border-subtle",
+          "border-r border-border",
         )}
       >
         <Minus size={size === "sm" ? 10 : 12} />
@@ -118,11 +118,11 @@ export function MollyNumberInput({
         aria-label="Increment"
         tabIndex={-1}
         className={cn(
-          "text-txt-tertiary hover:text-cyan hover:bg-mol-tertiary transition-colors",
+          "text-txt-tertiary hover:text-brand hover:bg-mol-tertiary transition-colors",
           "disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-txt-tertiary",
           "disabled:cursor-not-allowed",
           padding,
-          "border-l border-border-subtle",
+          "border-l border-border",
         )}
       >
         <Plus size={size === "sm" ? 10 : 12} />

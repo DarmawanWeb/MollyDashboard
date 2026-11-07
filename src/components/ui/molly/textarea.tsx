@@ -32,10 +32,10 @@ export const MollyTextarea = forwardRef<HTMLTextAreaElement, Props>(
           "rounded-lg bg-mol-secondary border text-txt-primary outline-none transition-colors resize-y min-h-16",
           "placeholder:text-txt-muted",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "focus:border-cyan",
+          "focus:border-brand focus:ring-2 focus:ring-brand/15",
           invalid
             ? "border-red focus:border-red"
-            : "border-border-subtle hover:border-border",
+            : "border-border hover:border-border-strong",
           textareaSize === "sm" ? "px-2 py-1 text-xs" : "px-3 py-2 text-sm",
           className,
         )}

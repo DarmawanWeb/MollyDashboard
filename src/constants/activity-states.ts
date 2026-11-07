@@ -25,10 +25,10 @@ const TONES = {
     textClass: "text-violet",
   },
   cyan: {
-    bgClass: "bg-cyan/10",
-    borderClass: "border-cyan/30",
-    dotClass: "bg-cyan",
-    textClass: "text-cyan",
+    bgClass: "bg-brand/10",
+    borderClass: "border-brand/30",
+    dotClass: "bg-brand",
+    textClass: "text-brand",
   },
   red: {
     bgClass: "bg-red/10",

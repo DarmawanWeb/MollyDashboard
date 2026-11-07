@@ -27,23 +27,22 @@ export function ThemeToggle({
       aria-label={name}
       title={name}
       className={cn(
-        "relative inline-flex size-9 shrink-0 items-center justify-center rounded-full",
-        "border border-border-subtle bg-mol-secondary text-txt-secondary",
-        "transition-colors hover:text-txt-primary hover:border-border",
+        "relative inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-txt-secondary",
+        "transition-colors hover:bg-mol-tertiary hover:text-txt-primary",
         className,
       )}
     >
       <Sun
         aria-hidden
         className={cn(
-          "absolute size-[45%] transition-all duration-300",
+          "absolute size-4 transition-all duration-300",
           dark ? "scale-0 -rotate-90 opacity-0" : "scale-100 rotate-0",
         )}
       />
       <Moon
         aria-hidden
         className={cn(
-          "absolute size-[45%] transition-all duration-300",
+          "absolute size-4 transition-all duration-300",
           dark ? "scale-100 rotate-0" : "scale-0 rotate-90 opacity-0",
         )}
       />
@@ -70,10 +69,7 @@ export function ThemeSwitcher({ className }: { className?: string }) {
     <div
       role="radiogroup"
       aria-label="Theme"
-      className={cn(
-        "inline-flex rounded-xl border border-border-subtle bg-mol-tertiary p-1",
-        className,
-      )}
+      className={cn("inline-flex rounded-lg bg-mol-tertiary p-0.5", className)}
     >
       {OPTIONS.map(({ mode: value, label, icon: Icon }) => {
         const active = hydrated && mode === value;
@@ -86,9 +82,9 @@ export function ThemeSwitcher({ className }: { className?: string }) {
             aria-checked={active}
             onClick={() => setMode(value)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+              "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
               active
-                ? "bg-mol-secondary text-txt-primary shadow-card"
+                ? "bg-mol-secondary text-txt-primary shadow-card ring-1 ring-border-subtle"
                 : "text-txt-tertiary hover:text-txt-primary",
             )}
           >

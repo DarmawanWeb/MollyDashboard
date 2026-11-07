@@ -41,11 +41,10 @@ export function MollySwitch({
       aria-label={ariaLabel}
       className={cn(
         "relative inline-flex shrink-0 cursor-pointer items-center rounded-full",
-        "border transition-colors outline-none",
-        "focus-visible:border-cyan",
-        "data-checked:bg-cyan data-checked:border-cyan",
-        "data-unchecked:bg-mol-primary data-unchecked:border-border-subtle",
-        "data-unchecked:hover:border-border",
+        "border border-transparent transition-colors outline-none",
+        "focus-visible:ring-2 focus-visible:ring-brand/30",
+        "data-checked:bg-brand",
+        "data-unchecked:bg-mol-elevated data-unchecked:hover:bg-border-strong",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         trackW,
         trackH,
@@ -57,8 +56,7 @@ export function MollySwitch({
           "translate-x-0.5",
           thumbSize,
           thumbTranslate,
-          "data-checked:bg-mol-root",
-          "data-unchecked:bg-txt-tertiary",
+          "bg-white shadow-sm",
         )}
       />
     </BaseSwitch.Root>

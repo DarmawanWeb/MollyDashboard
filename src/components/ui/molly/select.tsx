@@ -89,12 +89,12 @@ export function MollySelect<TValue extends string = string>({
         className={cn(
           "group/select inline-flex w-full items-center justify-between gap-2",
           "rounded-lg bg-mol-secondary border text-txt-primary outline-none transition-colors",
-          "focus:border-cyan",
-          "data-popup-open:border-cyan",
+          "focus:border-brand focus:ring-2 focus:ring-brand/15",
+          "data-popup-open:border-brand",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           invalid
             ? "border-red focus:border-red data-popup-open:border-red"
-            : "border-border-subtle hover:border-border",
+            : "border-border hover:border-border-strong",
           sizeClasses,
           className,
         )}
@@ -108,7 +108,7 @@ export function MollySelect<TValue extends string = string>({
           {selected ? (
             <>
               {selected.icon && (
-                <span className="shrink-0 text-cyan">{selected.icon}</span>
+                <span className="shrink-0 text-brand">{selected.icon}</span>
               )}
               <span className="truncate">{selected.label}</span>
             </>
@@ -136,7 +136,7 @@ export function MollySelect<TValue extends string = string>({
           <BaseSelect.Popup
             className={cn(
               "w-[var(--anchor-width)] min-w-[8rem]",
-              "overflow-hidden rounded-xl bg-mol-secondary border border-border shadow-card-lg",
+              "overflow-hidden rounded-xl bg-mol-secondary border border-border p-1 shadow-card-lg",
               "outline-none",
               "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
               "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
@@ -145,7 +145,7 @@ export function MollySelect<TValue extends string = string>({
             )}
             style={{ maxHeight: maxPopupHeight }}
           >
-            <BaseSelect.List className="overflow-y-auto py-1 max-h-[inherit]">
+            <BaseSelect.List className="overflow-y-auto max-h-[inherit]">
               {options.map((opt) => (
                 <BaseSelect.Item
                   key={opt.value}
@@ -153,15 +153,15 @@ export function MollySelect<TValue extends string = string>({
                   disabled={opt.disabled}
                   className={cn(
                     "relative flex w-full cursor-pointer items-center gap-2",
-                    "px-2.5 py-1.5 text-xs text-txt-secondary outline-none transition-colors",
+                    "rounded-md px-2.5 py-1.5 text-xs text-txt-secondary outline-none transition-colors",
                     "data-highlighted:bg-mol-tertiary data-highlighted:text-txt-primary",
-                    "data-selected:text-cyan",
+                    "data-selected:font-medium data-selected:text-txt-primary",
                     "data-disabled:opacity-40 data-disabled:cursor-not-allowed",
                     "data-disabled:hover:bg-transparent",
                   )}
                 >
                   {opt.icon && (
-                    <span className="shrink-0 text-cyan">{opt.icon}</span>
+                    <span className="shrink-0 text-brand">{opt.icon}</span>
                   )}
 
                   <BaseSelect.ItemText className="flex-1 truncate">
@@ -177,7 +177,7 @@ export function MollySelect<TValue extends string = string>({
                   <BaseSelect.ItemIndicator
                     render={
                       <span className="ml-1 flex w-3 shrink-0 items-center justify-center">
-                        <Check size={11} className="text-cyan" />
+                        <Check size={11} className="text-brand" />
                       </span>
                     }
                   />

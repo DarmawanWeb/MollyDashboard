@@ -34,10 +34,10 @@ export function MollyInput({
         "rounded-lg bg-mol-secondary border text-txt-primary outline-none transition-colors",
         "placeholder:text-txt-muted",
         "disabled:opacity-50 disabled:cursor-not-allowed",
-        "focus:border-cyan",
+        "focus:border-brand focus:ring-2 focus:ring-brand/15",
         invalid
           ? "border-red focus:border-red"
-          : "border-border-subtle hover:border-border",
+          : "border-border hover:border-border-strong",
         inputSize === "sm" ? "px-2 py-1 text-xs" : "px-3 py-2 text-sm",
         className,
       )}
