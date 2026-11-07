@@ -74,8 +74,8 @@ robot it says Molly is taking a break instead of showing made-up data.
 ## Navigation and Presentation Mode
 
 Every page shares one frame: a **sidebar** on the left (Showcase for visitors; Monitor,
-Mapping, System and Settings for the operator; Molly's status and the partners at the bottom)
-and a **top bar** in the same place on every page. Navigating keeps the robot connection, the
+Mapping, System and Settings for the operator; Molly's status at the bottom) and a **top bar**
+in the same place on every page, with the partners' logos on the Showcase. Navigating keeps the robot connection, the
 tour and the chat running; only the page content changes.
 
 - **Collapse** the sidebar to icons with the button on its edge or **Ctrl/⌘ B** (remembered per

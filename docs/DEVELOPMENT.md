@@ -79,7 +79,7 @@ keep moving (a showroom demo through the tunnel). A production build without a r
 
 Light and dark are CSS variables in `src/app/globals.css` (`:root` / `[data-theme="dark"]`),
 mapped to Tailwind names in `@theme inline`; use the tokens (`bg-mol-secondary`,
-`text-txt-primary`, `text-cyan`, …), never raw palette classes, and both themes stay right.
+`text-txt-primary`, `text-brand`, …), never raw palette classes, and both themes stay right.
 Canvas colors live in `src/components/map/palette.ts` (one set per theme).
 
 ## Common Commands

@@ -25,7 +25,7 @@ All notable changes to this project are documented here. The format follows
   and credits in the footers.
 - Settings: AI Assistant (answer engine, spoken answers, history) and Appearance sections.
 - One frame for every page: a sidebar (Showcase, Monitor, Mapping, System, Settings; Molly's
-  status; partners) that collapses to icons (Ctrl/⌘ B) and opens as a drawer on phones, and
+  status) that collapses to icons (Ctrl/⌘ B) and opens as a drawer on phones, and
   one top bar in the same place on every page. Pages fade in; nothing else reloads.
 - Presentation mode for the TV: no operator chrome, full screen, scaled to the screen, idle
   pointer hidden; leave with Esc or by holding the exit button; `?present=1` for kiosks.
@@ -37,6 +37,14 @@ All notable changes to this project are documented here. The format follows
 - Operator pages as cards in responsive grids (container queries); settings, toasts, stats,
   resource bars and the connection notice restyled.
 - New look: Plus Jakarta Sans, rounded cards and controls, light / dark design tokens.
+- Cleaner look: neutral grays with one indigo accent instead of cyan and violet, no gradients,
+  glows or tinted icon tiles (only Molly's paw mark keeps one), sentence-case labels, quieter
+  pills and badges, thinner progress bars, and a plain floor plan on the map.
+- The sidebar no longer repeats the partner names (the display's top bar shows the logos), and
+  the top bar shows Molly's name only where the sidebar does not.
+- The demo robot's floor plan is an exhibition hall with an entrance, partitions and stands
+  (no random noise), laid out so the demo tour never walks through a wall; its visitors stand
+  at the exhibits instead of following the robot.
 - The demo robot's POIs have descriptions and it gives short canned answers.
 
 ### Fixed

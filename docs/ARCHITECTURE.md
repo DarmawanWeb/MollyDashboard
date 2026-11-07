@@ -31,7 +31,7 @@ src/
 │   ├── map/                  OccupancyCanvas, RobotMap + renderers (pure) + palettes + hooks
 │   ├── providers/            Theme, Connection, Simulation, RosSync, TourController, Conversation
 │   ├── robot/                ActivityBadge, CameraFeed, Stat
-│   ├── shell/                AppShell, Sidebar (+ robot card, tooltips), TopBar
+│   ├── shell/                AppShell, Sidebar (+ Molly mark, robot card, tooltips), TopBar
 │   │                         (ShowcaseBar / OperatorBar), footer, presentation controls,
 │   │                         ShellEffects (prefs, shortcuts, fullscreen, idle pointer)
 │   ├── skeleton/             Loading placeholders
