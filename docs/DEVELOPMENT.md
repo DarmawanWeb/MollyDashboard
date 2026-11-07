@@ -45,6 +45,12 @@ Open `http://localhost:3010` (or `PORT=… pnpm dev`) for the visitor display, `
 operator pages. The URLs and the robot namespace can also be changed in **Settings →
 Connection** without a rebuild.
 
+From another device (the TV, a tablet, the robot) open the dev server by the machine's IP.
+Next.js only serves its dev scripts to hosts it allows; `next.config.ts` allows `127.0.0.1`,
+the private networks (`10.*`, `172.*`, `192.168.*`) and `*.local`. Add other hosts, such as a
+tunnel's hostname, to `DEV_ORIGINS` (comma separated) and restart `pnpm dev`. Production builds
+are not affected.
+
 ## Mock Robot
 
 Two ways to run without a robot:
@@ -207,3 +213,7 @@ on the robot.
 
 **Toast not appearing** — `ToastViewport` is mounted in the operator shell; the visitor
 display shows no toasts on purpose.
+
+**Dev page shows but nothing responds** (sidebar toggle, theme, chat) — it was opened from a
+host Next.js does not allow: the dev server logs `Blocked cross-origin request to Next.js dev
+resource … from "<host>"`. Add that host to `DEV_ORIGINS` and restart `pnpm dev` (see Setup).
