@@ -54,8 +54,8 @@ All notable changes to this project are documented here. The format follows
   through `DEV_ORIGINS`; the Next.js dev badge moved off the sidebar to the bottom right.
 - Collapsing and expanding the sidebar no longer jumps: the icons stay put, the text fades and
   slides under the rail's edge, every row keeps its height, and Molly's status at the bottom
-  stays an icon with its status dot. The phone drawer closes when the window grows to desktop
-  size.
+  stays an icon with its status dot. The collapse button on the edge is no longer half hidden
+  under the top bar. The phone drawer closes when the window grows to desktop size.
 - Switching pages no longer restarts the tour, the robot connection or the chat: the providers
   live in one shared layout, and every `useTourController()` drives the same tour instead of
   creating its own mock runner.

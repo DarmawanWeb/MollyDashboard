@@ -154,14 +154,16 @@ export function Sidebar() {
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border-subtle bg-mol-primary",
           "transition-[transform,width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none",
-          "lg:relative lg:z-20 lg:translate-x-0 lg:sb-collapsed:w-15",
+          "lg:relative lg:z-40 lg:translate-x-0 lg:sb-collapsed:w-15",
           mobileOpen
             ? "translate-x-0 max-lg:shadow-card-lg"
             : "-translate-x-full",
           "presenting:hidden",
         )}
       >
-        {/* collapse toggle on the edge (desktop), outside the clipped rail */}
+        {/* collapse toggle on the edge, centered on the top bar's bottom line
+            (desktop); outside the clipped rail, and the rail sits above the
+            top bar (z-40 > z-30), so the bar never covers half of it */}
         <button
           type="button"
           onClick={toggleSidebar}
