@@ -48,6 +48,14 @@ All notable changes to this project are documented here. The format follows
 - The demo robot's POIs have descriptions and it gives short canned answers.
 
 ### Fixed
+- `pnpm dev` opened by IP or from another device (TV, tablet, `127.0.0.1`): Next.js 16 kept
+  its dev scripts from any host but `localhost`, so the page showed but nothing responded
+  (sidebar toggle, theme, chat). Private networks and `*.local` are allowed now, other hosts
+  through `DEV_ORIGINS`; the Next.js dev badge moved off the sidebar to the bottom right.
+- Collapsing and expanding the sidebar no longer jumps: the icons stay put, the text fades and
+  slides under the rail's edge, every row keeps its height, and Molly's status at the bottom
+  stays an icon with its status dot. The phone drawer closes when the window grows to desktop
+  size.
 - Switching pages no longer restarts the tour, the robot connection or the chat: the providers
   live in one shared layout, and every `useTourController()` drives the same tour instead of
   creating its own mock runner.
