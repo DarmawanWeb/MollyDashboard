@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Info, Mic, Volume2 } from "lucide-react";
+import { Info, Mic, PawPrint, Volume2 } from "lucide-react";
 import { streamingText } from "@/lib/conversation/text";
 import type { DisplayCopy, DisplayLanguage } from "@/lib/display/copy";
 import { cn } from "@/lib/utils";
@@ -18,16 +18,17 @@ export function timeOf(at: number, language: DisplayLanguage): string {
     .replace(".", ":");
 }
 
+/** Molly in the chat: her paw on a quiet tile. */
 export function MollyAvatar({ className }: { className?: string }) {
   return (
     <span
       aria-hidden
       className={cn(
-        "grid size-8 shrink-0 place-items-center rounded-full bg-gradient-brand text-on-brand shadow-card",
+        "grid size-7 shrink-0 place-items-center rounded-full bg-brand/10 text-brand",
         className,
       )}
     >
-      <Bot className="size-4" />
+      <PawPrint className="size-[55%]" />
     </span>
   );
 }
@@ -38,7 +39,7 @@ export function TypingDots() {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="size-2 rounded-full bg-txt-tertiary animate-dots"
+          className="size-1.5 rounded-full bg-txt-tertiary animate-dots"
           style={{ animationDelay: `${i * 0.18}s` }}
         />
       ))}
@@ -49,9 +50,9 @@ export function TypingDots() {
 /** Molly's own line (welcome, notices). */
 export function MollyLine({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex animate-rise-in items-end gap-2.5">
+    <div className="flex animate-rise-in items-end gap-2">
       <MollyAvatar />
-      <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-border-subtle bg-mol-tertiary px-4 py-2.5 text-[0.95rem] leading-relaxed">
+      <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-mol-tertiary px-3.5 py-2.5 text-[0.92rem] leading-relaxed">
         {children}
       </div>
     </div>
@@ -72,25 +73,23 @@ export function ChatExchange({
   return (
     <div className="flex animate-rise-in flex-col gap-2">
       <div className="flex flex-col items-end gap-1">
-        <span className="flex items-center gap-1 px-1 text-[0.68rem] font-medium text-txt-muted">
+        <span className="flex items-center gap-1 px-1 text-[0.68rem] text-txt-muted">
           {inPerson && <Mic className="size-3" />}
           {inPerson ? copy.chat.inPerson : copy.chat.you} ·{" "}
           {timeOf(entry.at, language)}
         </span>
-        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-gradient-brand px-4 py-2.5 text-[0.95rem] font-medium leading-relaxed text-on-brand shadow-card">
+        <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-brand px-3.5 py-2.5 text-[0.92rem] leading-relaxed text-on-brand">
           {entry.question}
         </div>
       </div>
 
-      <div className="flex items-end gap-2.5">
+      <div className="flex items-end gap-2">
         <MollyAvatar />
         <div className="flex min-w-0 max-w-[85%] flex-col gap-1">
           <div
             className={cn(
-              "rounded-2xl rounded-bl-md border px-4 py-2.5 text-[0.95rem] leading-relaxed",
-              entry.ok
-                ? "border-border-subtle bg-mol-tertiary"
-                : "border-amber/30 bg-amber/10 text-txt-secondary",
+              "rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-[0.92rem] leading-relaxed",
+              entry.ok ? "bg-mol-tertiary" : "bg-amber/10 text-txt-secondary",
             )}
           >
             {entry.pending && !entry.answer ? (
@@ -114,7 +113,7 @@ export function ChatExchange({
             )}
           </div>
           {!entry.pending && entry.ok && entry.spoken && (
-            <span className="flex items-center gap-1 px-1 text-[0.68rem] font-medium text-txt-muted">
+            <span className="flex items-center gap-1 px-1 text-[0.68rem] text-txt-muted">
               <Volume2 className="size-3" />
               {copy.chat.spoken}
             </span>

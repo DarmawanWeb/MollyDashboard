@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** A rounded card of the visitor display, with an optional title row. */
+/** A card of the visitor display, with an optional title row. */
 export function DisplayCard({
   title,
+  subtitle,
   icon,
   aside,
   className,
@@ -11,6 +12,8 @@ export function DisplayCard({
   children,
 }: {
   title?: ReactNode;
+  /** Quiet text after the title (the place, the tour's name) */
+  subtitle?: ReactNode;
   icon?: ReactNode;
   /** Right side of the title row */
   aside?: ReactNode;
@@ -21,23 +24,29 @@ export function DisplayCard({
   return (
     <section
       className={cn(
-        "display-card flex min-h-0 min-w-0 flex-col overflow-hidden",
+        "display-card @container/card flex min-h-0 min-w-0 flex-col overflow-hidden",
         className,
       )}
     >
       {title && (
-        <header className="flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-3">
-          <div className="flex min-w-0 items-center gap-2.5">
+        <header className="flex min-h-14 shrink-0 items-center justify-between gap-3 px-5 py-3">
+          <div className="flex min-w-0 items-center gap-2">
             {icon && (
               <span
                 aria-hidden
-                className="grid size-8 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand [&>svg]:size-4"
+                className="shrink-0 text-txt-tertiary [&>svg]:size-4"
               >
                 {icon}
               </span>
             )}
-            <h2 className="truncate text-[1.05rem] font-bold tracking-tight">
+            <h2 className="truncate text-[0.95rem] font-semibold tracking-tight">
               {title}
+              {subtitle && (
+                <span className="font-normal text-txt-tertiary">
+                  {" "}
+                  · {subtitle}
+                </span>
+              )}
             </h2>
           </div>
           {aside}
@@ -48,7 +57,7 @@ export function DisplayCard({
   );
 }
 
-/** Small rounded label (status, place, counts). */
+/** Small label (status, place, counts). */
 export function Chip({
   children,
   className,
@@ -59,11 +68,31 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border border-border-subtle bg-mol-tertiary px-2.5 py-1 text-xs font-semibold text-txt-secondary",
+        "inline-flex max-w-full shrink-0 items-center gap-1.5 truncate rounded-md bg-mol-tertiary px-2 py-1 text-xs font-medium text-txt-secondary",
         className,
       )}
     >
       {children}
     </span>
+  );
+}
+
+/** A status dot (green running, amber paused, gray idle). */
+export function Dot({
+  className,
+  pulse = false,
+}: {
+  className?: string;
+  pulse?: boolean;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "size-1.5 shrink-0 rounded-full",
+        pulse && "motion-safe:animate-pulse-dot",
+        className,
+      )}
+    />
   );
 }

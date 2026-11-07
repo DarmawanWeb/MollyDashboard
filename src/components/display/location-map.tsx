@@ -6,17 +6,17 @@ import { RobotMap } from "@/components/map/robot-map";
 import type { DisplayMode } from "@/hooks/use-display-mode";
 import type { DisplayCopy } from "@/lib/display/copy";
 import type { Story } from "@/lib/display/story";
-import { Chip, DisplayCard } from "./display-card";
+import { DisplayCard } from "./display-card";
 
 function Legend({ copy }: { copy: DisplayCopy }) {
   return (
-    <div className="pointer-events-none absolute top-2.5 right-2.5 flex flex-wrap items-center gap-2.5 rounded-full border border-border-subtle bg-mol-secondary/85 px-2.5 py-1 text-[0.66rem] font-semibold text-txt-secondary shadow-card backdrop-blur">
+    <div className="hidden shrink-0 items-center gap-3 text-xs text-txt-tertiary @[30rem]/card:flex">
       <span className="flex items-center gap-1.5">
-        <span className="size-2.5 rounded-full bg-cyan ring-4 ring-cyan/20" />
+        <span className="size-2 rounded-full bg-brand ring-2 ring-brand/25" />
         {copy.map.molly}
       </span>
       <span className="flex items-center gap-1.5">
-        <span className="size-2 rotate-45 bg-violet" />
+        <span className="size-[0.45rem] rotate-45 rounded-[1px] bg-txt-secondary" />
         {copy.map.stops}
       </span>
       <span className="flex items-center gap-1.5">
@@ -45,19 +45,16 @@ export function LocationMap({
     <DisplayCard
       icon={<MapPin />}
       title={copy.map.title}
-      aside={
-        !offline && story.place ? (
-          <Chip>{copy.map.near(story.place)}</Chip>
-        ) : null
-      }
+      subtitle={!offline && story.place ? copy.map.near(story.place) : null}
+      aside={offline ? null : <Legend copy={copy} />}
       className={className}
-      bodyClassName="relative mx-3 mb-3 overflow-hidden rounded-2xl border border-border-subtle"
+      bodyClassName="relative mx-3 mb-3 overflow-hidden rounded-xl border border-border-subtle"
     >
       {offline ? (
         <div className="grid h-full min-h-40 place-items-center bg-mol-tertiary p-6 text-center">
           <div className="flex flex-col items-center gap-2 text-txt-tertiary">
-            <MapPinOff className="size-7" />
-            <span className="text-sm font-semibold">{copy.map.noMap}</span>
+            <MapPinOff className="size-6" />
+            <span className="text-sm font-medium">{copy.map.noMap}</span>
           </div>
         </div>
       ) : (
@@ -65,7 +62,6 @@ export function LocationMap({
           <div className="absolute inset-0">
             <RobotMap variant="display" showPoiLabels />
           </div>
-          <Legend copy={copy} />
         </ErrorBoundary>
       )}
     </DisplayCard>

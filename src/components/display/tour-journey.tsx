@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useSiteStore } from "@/stores/use-site-store";
 import { useTourStore } from "@/stores/use-tour-store";
 import type { POI } from "@/types";
-import { Chip, DisplayCard } from "./display-card";
+import { Chip, DisplayCard, Dot } from "./display-card";
 
 /** The running tour's stops: its saved list, or every POI for an ad-hoc tour. */
 function useTourStops(): POI[] {
@@ -23,13 +23,19 @@ function useTourStops(): POI[] {
     .filter((p): p is POI => p !== undefined);
 }
 
+/**
+ * The stops in a row. The line into the current stop fills half way while
+ * Molly walks there, and all the way once she has arrived.
+ */
 function Stepper({
   stops,
   current,
+  walking,
   copy,
 }: {
   stops: POI[];
   current: number;
+  walking: boolean;
   copy: DisplayCopy;
 }) {
   const listRef = useRef<HTMLOListElement>(null);
@@ -47,60 +53,61 @@ function Stepper({
   return (
     <ol
       ref={listRef}
-      className="flex snap-x items-start overflow-x-auto pb-1 [scrollbar-width:none]"
+      className="flex snap-x items-start overflow-x-auto [scrollbar-width:none]"
     >
       {stops.map((poi, i) => {
         const done = i < current;
         const now = i === current;
+        const fill = i < current ? 1 : now ? (walking ? 0.5 : 1) : 0;
         return (
           <li
             key={poi.id}
-            className="relative flex min-w-[7.5rem] flex-1 snap-center flex-col items-center gap-2 px-1 text-center"
+            className="relative flex min-w-[7rem] flex-1 snap-center flex-col items-center gap-2 px-1 text-center"
           >
             {i > 0 && (
               <span
                 aria-hidden
-                className={cn(
-                  "absolute top-[1.125rem] right-1/2 left-[-50%] z-0 h-1 rounded-full",
-                  i <= current ? "bg-gradient-brand" : "bg-border",
-                )}
-              />
-            )}
-            <span className="relative z-10 grid size-10 place-items-center">
-              {now && (
-                <span
-                  aria-hidden
-                  className="absolute inset-0 rounded-full bg-brand/40 animate-ping-soft"
-                />
-              )}
-              <span
-                className={cn(
-                  "relative grid size-10 place-items-center rounded-full border-2 text-sm font-bold",
-                  done && "border-transparent bg-gradient-brand text-on-brand",
-                  now && "border-brand bg-mol-secondary text-brand shadow-card",
-                  !done &&
-                    !now &&
-                    "border-border bg-mol-secondary text-txt-muted",
-                )}
+                className="absolute top-[0.9375rem] right-[calc(50%+1.5rem)] left-[calc(-50%+1.5rem)] h-0.5 overflow-hidden rounded-full bg-border"
               >
-                {done ? <Check className="size-4" strokeWidth={3} /> : i + 1}
+                <span
+                  className="block h-full rounded-full bg-brand transition-[width] duration-1000 ease-out"
+                  style={{ width: `${fill * 100}%` }}
+                />
               </span>
+            )}
+            <span
+              className={cn(
+                "relative grid size-8 place-items-center rounded-full text-xs font-semibold transition-colors",
+                done && "bg-brand text-on-brand",
+                now &&
+                  "bg-mol-secondary text-brand ring-2 ring-brand ring-offset-2 ring-offset-mol-secondary",
+                !done &&
+                  !now &&
+                  "bg-mol-secondary text-txt-tertiary ring-1 ring-border",
+              )}
+            >
+              {done ? <Check className="size-4" strokeWidth={2.5} /> : i + 1}
             </span>
             <span
               className={cn(
                 "line-clamp-2 text-[0.8rem] leading-tight",
                 now
-                  ? "font-bold text-txt-primary"
-                  : "font-medium text-txt-tertiary",
+                  ? "font-semibold text-txt-primary"
+                  : done
+                    ? "text-txt-secondary"
+                    : "text-txt-tertiary",
               )}
             >
               {poi.name}
             </span>
-            {now && (
-              <span className="rounded-full bg-brand/12 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-brand">
-                {copy.journey.now}
-              </span>
-            )}
+            <span
+              className={cn(
+                "-mt-1 text-[0.7rem] font-medium text-brand",
+                !now && "invisible",
+              )}
+            >
+              {copy.journey.now}
+            </span>
           </li>
         );
       })}
@@ -112,18 +119,18 @@ function Explore({ pois, copy }: { pois: POI[]; copy: DisplayCopy }) {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 px-5 pb-5">
       <p className="text-sm text-txt-tertiary">{copy.journey.exploreBody}</p>
-      <div className="grid min-h-0 grid-flow-col auto-cols-[minmax(9rem,1fr)] gap-3 overflow-x-auto pb-1">
+      <div className="grid min-h-0 grid-flow-col auto-cols-[minmax(9rem,1fr)] gap-3 overflow-x-auto">
         {pois.slice(0, 8).map((poi, i) => (
           <article
             key={poi.id}
-            className="flex min-w-0 animate-rise-in flex-col gap-1.5 rounded-2xl border border-border-subtle bg-mol-tertiary p-3.5"
+            className="flex min-w-0 animate-rise-in flex-col gap-1.5 rounded-xl border border-border-subtle p-3.5"
             style={{ animationDelay: `${i * 70}ms` }}
           >
             <div className="flex items-center gap-2">
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-brand text-xs font-bold text-on-brand">
+              <span className="grid size-6 shrink-0 place-items-center rounded-md bg-mol-tertiary text-xs font-semibold text-txt-secondary tabular-nums">
                 {i + 1}
               </span>
-              <h3 className="truncate text-sm font-bold">{poi.name}</h3>
+              <h3 className="truncate text-sm font-semibold">{poi.name}</h3>
             </div>
             {(poi.description || poi.narration) && (
               <p className="line-clamp-2 text-[0.78rem] leading-snug text-txt-tertiary">
@@ -148,11 +155,11 @@ function MeetMolly({ copy, note }: { copy: DisplayCopy; note?: string }) {
           return (
             <div
               key={fact.title}
-              className="flex items-start gap-2.5 rounded-2xl border border-border-subtle bg-mol-tertiary p-3"
+              className="flex items-start gap-2.5 rounded-xl border border-border-subtle p-3"
             >
-              <Icon className="mt-0.5 size-4 shrink-0 text-brand" />
+              <Icon className="mt-0.5 size-4 shrink-0 text-txt-tertiary" />
               <div className="min-w-0">
-                <div className="text-sm font-bold">{fact.title}</div>
+                <div className="text-sm font-semibold">{fact.title}</div>
                 <div className="text-[0.75rem] leading-snug text-txt-tertiary">
                   {fact.body}
                 </div>
@@ -190,70 +197,49 @@ export function TourJourney({
 
   const offline = mode === "offline";
   const touring = !offline && (state === "RUNNING" || state === "PAUSED");
+  const paused = state === "PAUSED";
   const count = total || stops.length;
   const current = Math.max(0, index);
-  // the walk to a stop counts as half way there
-  const progress = touring
-    ? Math.min(
-        1,
-        (current + (activity === "navigating" ? 0.4 : 1)) / Math.max(1, count),
-      )
-    : 0;
 
   const chip = touring ? (
-    <Chip
-      className={cn(
-        state === "PAUSED"
-          ? "border-amber/30 bg-amber/10 text-amber"
-          : "border-green/30 bg-green/10 text-green",
-      )}
-    >
-      <span
-        className={cn(
-          "size-1.5 rounded-full",
-          state === "PAUSED" ? "bg-amber" : "bg-green animate-pulse-dot",
-        )}
-      />
-      {state === "PAUSED" ? copy.journey.paused : copy.journey.running}
+    <Chip>
+      <Dot className={paused ? "bg-amber" : "bg-green"} pulse={!paused} />
+      {paused ? copy.journey.paused : copy.journey.running}
     </Chip>
   ) : (
-    <Chip>{offline ? copy.status.offline : copy.journey.ready}</Chip>
+    <Chip>
+      <Dot className="bg-txt-muted" />
+      {offline ? copy.status.offline : copy.journey.ready}
+    </Chip>
   );
 
   return (
     <DisplayCard
       icon={<Compass />}
       title={
-        touring && tourName ? (
-          <>
-            {copy.journey.title}
-            <span className="font-medium text-txt-tertiary"> · {tourName}</span>
-          </>
-        ) : touring ? (
-          copy.journey.title
-        ) : offline ? (
-          copy.journey.restingTitle
-        ) : (
-          copy.journey.exploreTitle
-        )
+        touring
+          ? copy.journey.title
+          : offline
+            ? copy.journey.restingTitle
+            : copy.journey.exploreTitle
       }
+      subtitle={touring ? tourName : null}
       aside={chip}
       className={className}
     >
       {touring ? (
-        <div className="flex h-full flex-col gap-3 px-5 pb-5">
-          <Stepper stops={stops} current={current} copy={copy} />
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <p className="text-base font-semibold">{copy.story(story)}</p>
-            <span className="text-sm font-semibold text-txt-tertiary tabular-nums">
+        <div className="flex h-full flex-col gap-3 px-5 pt-1 pb-4">
+          <Stepper
+            stops={stops}
+            current={current}
+            walking={activity === "navigating"}
+            copy={copy}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border-subtle pt-3">
+            <p className="text-[0.95rem] font-medium">{copy.story(story)}</p>
+            <span className="text-sm text-txt-tertiary tabular-nums">
               {copy.journey.stopOf(current + 1, count)}
             </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-mol-tertiary">
-            <div
-              className="h-full rounded-full bg-gradient-brand transition-[width] duration-1000 ease-out"
-              style={{ width: `${Math.round(progress * 100)}%` }}
-            />
           </div>
         </div>
       ) : offline ? (

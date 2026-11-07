@@ -46,7 +46,7 @@ const STORY_EN: Record<StoryKind, StoryText> = {
 };
 
 const id = {
-  tagline: "Robot Pemandu Berbasis AI",
+  tagline: "Robot pemandu berbasis AI",
   language: "Bahasa",
   theme: { light: "Ganti ke mode terang", dark: "Ganti ke mode gelap" },
   status: {
@@ -57,8 +57,8 @@ const id = {
   story: (s: Story) => STORY_ID[s.kind](s),
   camera: {
     title: "Pandangan Molly",
-    live: "LANGSUNG",
-    demo: "DEMO",
+    live: "Langsung",
+    demo: "Demo",
     offlineTitle: "Molly sedang beristirahat",
     offlineBody: "Molly akan kembali menyapa sebentar lagi.",
     demoTitle: "Kamera Molly",
@@ -84,7 +84,7 @@ const id = {
     },
   },
   journey: {
-    title: "Perjalanan Tur",
+    title: "Perjalanan tur",
     exploreTitle: "Jelajahi bersama Molly",
     exploreBody: "Tempat-tempat menarik yang bisa Molly tunjukkan:",
     stopOf: (i: number, n: number) => `Pemberhentian ${i} dari ${n}`,
@@ -128,7 +128,7 @@ const id = {
     resting: "Molly sedang beristirahat. Coba tanya lagi nanti, ya.",
   },
   history: {
-    title: "Riwayat Percakapan",
+    title: "Riwayat percakapan",
     search: "Cari pertanyaan atau jawaban…",
     today: "Hari ini",
     yesterday: "Kemarin",
@@ -164,7 +164,7 @@ const id = {
 export type DisplayCopy = typeof id;
 
 const en: DisplayCopy = {
-  tagline: "AI Tour Guide Robot",
+  tagline: "AI tour guide robot",
   language: "Language",
   theme: { light: "Switch to light mode", dark: "Switch to dark mode" },
   status: {
@@ -175,8 +175,8 @@ const en: DisplayCopy = {
   story: (s: Story) => STORY_EN[s.kind](s),
   camera: {
     title: "Molly's view",
-    live: "LIVE",
-    demo: "DEMO",
+    live: "Live",
+    demo: "Demo",
     offlineTitle: "Molly is taking a break",
     offlineBody: "She will be back to say hello soon.",
     demoTitle: "Molly's camera",
@@ -202,7 +202,7 @@ const en: DisplayCopy = {
     },
   },
   journey: {
-    title: "Tour Journey",
+    title: "Tour journey",
     exploreTitle: "Explore with Molly",
     exploreBody: "Places Molly can show you:",
     stopOf: (i: number, n: number) => `Stop ${i} of ${n}`,
@@ -246,7 +246,7 @@ const en: DisplayCopy = {
     resting: "Molly is taking a break. Please ask again later.",
   },
   history: {
-    title: "Conversation History",
+    title: "Conversation history",
     search: "Search questions or answers…",
     today: "Today",
     yesterday: "Yesterday",

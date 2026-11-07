@@ -42,8 +42,8 @@ function Item({
   language: DisplayLanguage;
 }) {
   return (
-    <li className="rounded-2xl border border-border-subtle bg-mol-secondary p-4 shadow-card">
-      <div className="mb-1.5 flex flex-wrap items-center gap-2 text-[0.68rem] font-semibold text-txt-muted">
+    <li className="rounded-xl border border-border-subtle bg-mol-secondary p-4">
+      <div className="mb-1.5 flex flex-wrap items-center gap-2 text-[0.7rem] text-txt-tertiary">
         <span className="tabular-nums">{timeOf(entry.at, language)}</span>
         {entry.source === "robot" && (
           <span className="inline-flex items-center gap-1">
@@ -52,7 +52,7 @@ function Item({
           </span>
         )}
         {entry.engine === "llm" && (
-          <span className="inline-flex items-center gap-1 text-violet">
+          <span className="inline-flex items-center gap-1 text-brand">
             <Sparkles className="size-3" />
             AI
           </span>
@@ -64,7 +64,7 @@ function Item({
           </span>
         )}
       </div>
-      <p className="font-semibold leading-snug">{entry.question}</p>
+      <p className="font-medium leading-snug">{entry.question}</p>
       <p className="mt-1 text-sm leading-relaxed text-txt-secondary">
         {entry.answer}
       </p>
@@ -140,7 +140,7 @@ export function HistoryDrawer({
         tabIndex={-1}
         onClick={onClose}
         className={cn(
-          "absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300",
+          "absolute inset-0 bg-black/30 transition-opacity duration-300",
           open ? "opacity-100" : "opacity-0",
         )}
       />
@@ -155,11 +155,9 @@ export function HistoryDrawer({
       >
         <header className="flex items-center justify-between gap-3 border-b border-border-subtle px-5 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-xl bg-brand/12 text-brand">
-              <History className="size-4.5" />
-            </span>
-            <div>
-              <h2 className="font-bold leading-tight">{copy.history.title}</h2>
+            <History className="size-4 text-txt-tertiary" />
+            <div className="leading-tight">
+              <h2 className="font-semibold">{copy.history.title}</h2>
               <p className="text-xs text-txt-tertiary">
                 {copy.history.count(total)}
               </p>
@@ -169,14 +167,14 @@ export function HistoryDrawer({
             type="button"
             onClick={onClose}
             aria-label={copy.history.close}
-            className="grid size-9 place-items-center rounded-full border border-border-subtle bg-mol-secondary text-txt-secondary hover:text-txt-primary"
+            className="grid size-8 place-items-center rounded-lg text-txt-secondary transition-colors hover:bg-mol-tertiary hover:text-txt-primary"
           >
             <X className="size-4" />
           </button>
         </header>
 
         <div className="px-5 py-3">
-          <label className="flex items-center gap-2 rounded-2xl border border-border bg-mol-secondary px-3.5 py-2.5 focus-within:border-brand">
+          <label className="flex items-center gap-2 rounded-lg border border-border bg-mol-secondary px-3 py-2 transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/15">
             <Search className="size-4 text-txt-muted" />
             <input
               ref={searchRef}
@@ -197,10 +195,10 @@ export function HistoryDrawer({
           ) : (
             groups.map((group) => (
               <section key={group.key} className="mb-5">
-                <h3 className="sticky top-0 z-10 mb-2 bg-mol-root/95 py-1.5 text-xs font-bold uppercase tracking-wider text-txt-tertiary backdrop-blur">
+                <h3 className="sticky top-0 z-10 mb-2 bg-mol-root/95 py-1.5 text-xs font-medium text-txt-tertiary backdrop-blur">
                   {dayLabel(group.at, copy, language)}
                 </h3>
-                <ul className="flex flex-col gap-2.5">
+                <ul className="flex flex-col gap-2">
                   {group.items.map((e) => (
                     <Item
                       key={e.id}

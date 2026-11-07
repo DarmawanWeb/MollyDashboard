@@ -48,61 +48,31 @@ function Placeholder({
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* soft brand light and rings */}
-      <div
-        aria-hidden
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(70% 60% at 50% 45%, color-mix(in oklab, var(--brand) 22%, transparent), transparent 70%), radial-gradient(50% 50% at 80% 90%, color-mix(in oklab, var(--brand-2) 18%, transparent), transparent 70%)",
-        }}
-      />
-      <div aria-hidden className="absolute inset-0 grid place-items-center">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="absolute aspect-square w-[38%] rounded-full border border-brand/30 animate-ping-soft"
-            style={{ animationDelay: `${i * 0.8}s` }}
-          />
-        ))}
-      </div>
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(var(--txt-primary) 1px, transparent 1px), linear-gradient(90deg, var(--txt-primary) 1px, transparent 1px)",
-          backgroundSize: "2.5rem 2.5rem",
-          maskImage:
-            "radial-gradient(circle at center, black, transparent 75%)",
-        }}
-      />
-
       {/* sized by the card's height, so a short card never runs into the caption */}
       <div
         className={cn(
-          "relative flex h-full flex-col items-center gap-3 px-6 pt-14 pb-6 text-center",
+          "relative flex h-full flex-col items-center gap-2 px-6 pt-14 pb-6 text-center",
           captioned ? "justify-start" : "justify-center",
         )}
       >
         <div
           className={cn(
-            "flex max-w-[min(80%,26rem)] shrink-0 items-center justify-center transition-[height] duration-500",
+            "mb-2 flex max-w-[min(80%,26rem)] shrink-0 items-center justify-center transition-[height] duration-500",
             captioned ? "h-[40%]" : "h-[46%]",
-            offline && "opacity-60 grayscale",
+            offline && "opacity-50 grayscale",
           )}
         >
           <MollyIllustration className="h-full w-auto max-w-full" />
         </div>
         <div
           className={cn(
-            "flex items-center gap-2 text-lg font-bold",
+            "flex items-center gap-2 text-base font-semibold",
             captioned && "hidden",
           )}
         >
-          {offline && <Moon className="size-5 text-txt-tertiary" />}
+          {offline && <Moon className="size-4 text-txt-tertiary" />}
           {failed && !offline && (
-            <VideoOff className="size-5 text-txt-tertiary" />
+            <VideoOff className="size-4 text-txt-tertiary" />
           )}
           {title}
         </div>
@@ -118,7 +88,7 @@ function Placeholder({
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-mol-secondary px-3 py-1.5 text-xs font-semibold text-txt-secondary hover:text-txt-primary"
+            className="mt-1 inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-mol-secondary px-3 text-xs font-medium text-txt-secondary transition-colors hover:bg-mol-tertiary hover:text-txt-primary"
           >
             <RotateCcw className="size-3.5" />
             {copy.camera.retry}
@@ -156,8 +126,8 @@ export function HeroCamera({
   const live = mode === "live" && !failed;
   const src = `${url}&_=${attempt}`;
   const chip = live
-    ? "bg-black/45 text-white"
-    : "border border-border-subtle bg-mol-secondary/85 text-txt-primary shadow-card";
+    ? "bg-black/55 text-white backdrop-blur-md"
+    : "border border-border-subtle bg-mol-secondary text-txt-primary shadow-card";
 
   return (
     <section
@@ -195,11 +165,11 @@ export function HeroCamera({
         <>
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/30 to-transparent"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/40 to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/35 to-transparent"
           />
         </>
       )}
@@ -207,13 +177,13 @@ export function HeroCamera({
       <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
         <span
           className={cn(
-            "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold backdrop-blur",
+            "inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 text-xs font-medium",
             chip,
           )}
         >
           <span
             className={cn(
-              "size-2 rounded-full",
+              "size-1.5 rounded-full",
               live
                 ? "bg-red-500 animate-pulse-dot"
                 : mode === "demo"
@@ -226,32 +196,28 @@ export function HeroCamera({
             : mode === "demo"
               ? copy.camera.demo
               : copy.status.offline}
-          <span className="hidden font-medium opacity-75 @md:inline">
+          <span
+            className={cn(
+              "hidden @md:inline",
+              live ? "text-white/70" : "text-txt-tertiary",
+            )}
+          >
             · {copy.camera.title}
           </span>
         </span>
 
         <span
           className={cn(
-            "inline-flex min-w-0 max-w-[65%] items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold backdrop-blur",
+            "inline-flex h-8 min-w-0 max-w-[65%] items-center gap-2 rounded-lg px-3 text-[0.8rem] font-medium",
             chip,
           )}
         >
-          <span className="relative flex size-2.5 shrink-0">
-            <span
-              aria-hidden
-              className={cn(
-                "absolute inset-0 rounded-full animate-ping-soft",
-                TONE[storyTone(story.kind)],
-              )}
-            />
-            <span
-              className={cn(
-                "relative size-2.5 rounded-full",
-                TONE[storyTone(story.kind)],
-              )}
-            />
-          </span>
+          <span
+            className={cn(
+              "size-2 shrink-0 rounded-full",
+              TONE[storyTone(story.kind)],
+            )}
+          />
           <span className="truncate">{copy.story(story)}</span>
         </span>
       </div>
@@ -261,6 +227,7 @@ export function HeroCamera({
           <SpeechCaption
             text={captionText}
             speaking={caption.speaking}
+            onVideo={live}
             copy={copy}
           />
         </div>

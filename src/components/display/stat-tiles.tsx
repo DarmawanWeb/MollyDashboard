@@ -21,53 +21,49 @@ import { useRobotStore } from "@/stores/use-robot-store";
 
 function Tile({
   icon,
-  tint,
   label,
   value,
   unit,
   hint,
+  alert = false,
   children,
 }: {
   icon: ReactNode;
-  /** Classes for the icon badge */
-  tint: string;
   label: string;
   value: string;
   unit?: string;
   hint: string;
+  /** Tints the icon (low battery) */
+  alert?: boolean;
   children?: ReactNode;
 }) {
   return (
-    <div className="display-card flex min-w-0 items-center gap-3 px-3.5 py-3">
-      <span
-        aria-hidden
-        className={cn(
-          "grid size-10 shrink-0 place-items-center rounded-2xl [&>svg]:size-5",
-          tint,
-        )}
-      >
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="line-clamp-2 text-[0.72rem] font-semibold leading-tight text-txt-tertiary">
+    <div className="display-card flex min-w-0 flex-col px-4 py-3.5">
+      <div className="flex items-start justify-between gap-2">
+        <span className="line-clamp-2 text-[0.8rem] font-medium leading-snug text-txt-secondary">
           {label}
-        </div>
-        <div className="flex items-baseline gap-1">
-          <span className="font-extrabold text-[1.65rem] leading-tight tabular-nums tracking-tight">
-            {value}
-          </span>
-          {unit && (
-            <span className="text-sm font-semibold text-txt-tertiary">
-              {unit}
-            </span>
+        </span>
+        <span
+          aria-hidden
+          className={cn(
+            "mt-px shrink-0 [&>svg]:size-4",
+            alert ? "text-orange" : "text-txt-muted",
           )}
-        </div>
-        {children ?? (
-          <div className="hidden truncate text-[0.68rem] text-txt-muted @2xl:block">
-            {hint}
-          </div>
+        >
+          {icon}
+        </span>
+      </div>
+      <div className="mt-auto flex items-baseline gap-1 pt-2">
+        <span className="text-[1.75rem] font-semibold leading-none tabular-nums tracking-tight">
+          {value}
+        </span>
+        {unit && (
+          <span className="text-sm font-medium text-txt-tertiary">{unit}</span>
         )}
       </div>
+      {children ?? (
+        <div className="mt-2 truncate text-xs text-txt-tertiary">{hint}</div>
+      )}
     </div>
   );
 }
@@ -103,18 +99,13 @@ export function StatTiles({
   const meters = fresh ? stats.distanceM : 0;
 
   const pct = offline || battery === null ? null : Math.round(battery);
+  const low = pct !== null && pct <= 25;
   const BatteryIcon =
     pct === null || pct > 60
       ? BatteryFull
       : pct > 25
         ? BatteryMedium
         : BatteryLow;
-  const batteryTint =
-    pct === null
-      ? "bg-mol-tertiary text-txt-tertiary"
-      : pct > 25
-        ? "bg-green/12 text-green"
-        : "bg-orange/12 text-orange";
 
   return (
     <div
@@ -125,28 +116,24 @@ export function StatTiles({
     >
       <Tile
         icon={<Users />}
-        tint="bg-brand/12 text-brand"
         label={copy.stats.visitors}
         value={offline ? "—" : String(visitors)}
         hint={copy.stats.visitorsHint}
       />
       <Tile
         icon={<MessageCircleQuestion />}
-        tint="bg-violet/12 text-violet"
         label={copy.stats.questions}
         value={hydrated ? String(questions) : "—"}
         hint={copy.stats.questionsHint}
       />
       <Tile
         icon={<Route />}
-        tint="bg-cyan/12 text-cyan"
         label={copy.stats.tours}
         value={hydrated ? String(tours) : "—"}
         hint={copy.stats.toursHint}
       />
       <Tile
         icon={<Footprints />}
-        tint="bg-amber/12 text-amber"
         label={copy.stats.distance}
         value={
           !hydrated
@@ -160,17 +147,17 @@ export function StatTiles({
       />
       <Tile
         icon={<BatteryIcon />}
-        tint={batteryTint}
         label={copy.stats.battery}
         value={pct === null ? "—" : String(pct)}
         unit={pct === null ? undefined : "%"}
         hint=""
+        alert={low}
       >
-        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-mol-tertiary">
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-mol-tertiary">
           <div
             className={cn(
               "h-full rounded-full transition-[width] duration-700",
-              pct !== null && pct <= 25 ? "bg-orange" : "bg-gradient-brand",
+              low ? "bg-orange" : "bg-brand",
             )}
             style={{ width: `${pct ?? 0}%` }}
           />

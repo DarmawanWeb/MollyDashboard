@@ -4,7 +4,6 @@ import {
   History,
   Loader2,
   SendHorizontal,
-  Sparkles,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -15,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { useConversationStore } from "@/stores/use-conversation-store";
 import { useDisplayStore } from "@/stores/use-display-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
-import { ChatExchange, MollyLine } from "./chat-message";
+import { ChatExchange, MollyAvatar, MollyLine } from "./chat-message";
 import { HistoryDrawer } from "./history-drawer";
 
 /** Exchanges shown in the chat; the drawer has the rest. */
@@ -81,13 +80,11 @@ export function ChatPanel({
       )}
       aria-label={copy.chat.title}
     >
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border-subtle px-5 py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-gradient-brand text-on-brand shadow-card">
-            <Sparkles className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="truncate text-lg font-extrabold leading-tight tracking-tight">
+      <header className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-border-subtle px-5 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <MollyAvatar className="size-8" />
+          <div className="min-w-0 leading-tight">
+            <h2 className="truncate text-[0.95rem] font-semibold tracking-tight">
               {copy.chat.title}
             </h2>
             <p className="truncate text-xs text-txt-tertiary">
@@ -95,7 +92,7 @@ export function ChatPanel({
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => setSpeak(!speak)}
@@ -103,10 +100,8 @@ export function ChatPanel({
             aria-label={speak ? copy.chat.speakOn : copy.chat.speakOff}
             title={speak ? copy.chat.speakOn : copy.chat.speakOff}
             className={cn(
-              "grid size-9 place-items-center rounded-full border transition-colors",
-              speak
-                ? "border-brand/30 bg-brand/10 text-brand"
-                : "border-border-subtle bg-mol-secondary text-txt-tertiary",
+              "grid size-8 place-items-center rounded-lg transition-colors hover:bg-mol-tertiary",
+              speak ? "text-brand" : "text-txt-tertiary hover:text-txt-primary",
             )}
           >
             {speak ? (
@@ -118,7 +113,7 @@ export function ChatPanel({
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-subtle bg-mol-secondary px-3 text-xs font-semibold text-txt-secondary transition-colors hover:text-txt-primary"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-txt-secondary transition-colors hover:bg-mol-tertiary hover:text-txt-primary"
           >
             <History className="size-4" />
             {copy.chat.history}
@@ -128,7 +123,7 @@ export function ChatPanel({
 
       <div
         ref={listRef}
-        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4"
+        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-5"
         aria-live="polite"
       >
         <MollyLine>{copy.chat.welcome}</MollyLine>
@@ -143,16 +138,16 @@ export function ChatPanel({
         {!available && <MollyLine>{copy.chat.resting}</MollyLine>}
       </div>
 
-      <div className="shrink-0 border-t border-border-subtle bg-mol-secondary/60 px-4 pt-3 pb-4">
+      <div className="shrink-0 px-4 pt-1 pb-4">
         {idle && available && (
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-3 flex flex-wrap gap-1.5">
             {copy.chat.suggestions.map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => send(s)}
                 disabled={busy}
-                className="rounded-full border border-brand/25 bg-brand/8 px-3 py-1.5 text-left text-[0.8rem] font-semibold text-brand transition-colors hover:bg-brand/15 disabled:opacity-50"
+                className="rounded-lg border border-border px-2.5 py-1.5 text-left text-[0.8rem] text-txt-secondary transition-colors hover:border-border-strong hover:bg-mol-tertiary hover:text-txt-primary disabled:opacity-50"
               >
                 {s}
               </button>
@@ -164,7 +159,7 @@ export function ChatPanel({
             e.preventDefault();
             send(question);
           }}
-          className="flex items-center gap-2 rounded-2xl border border-border bg-mol-secondary p-1.5 pl-4 shadow-card transition-colors focus-within:border-brand"
+          className="flex items-center gap-2 rounded-xl border border-border bg-mol-secondary p-1.5 pl-3.5 transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/15"
         >
           <input
             value={question}
@@ -180,12 +175,12 @@ export function ChatPanel({
             type="submit"
             disabled={!question.trim() || busy || !available}
             aria-label={copy.chat.send}
-            className="grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-brand text-on-brand shadow-card transition-opacity hover:opacity-90 disabled:opacity-40"
+            className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand text-on-brand transition-colors hover:bg-brand-light disabled:bg-mol-tertiary disabled:text-txt-muted"
           >
             {busy ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
-              <SendHorizontal className="size-5" />
+              <SendHorizontal className="size-4" />
             )}
           </button>
         </form>

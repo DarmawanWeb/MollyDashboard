@@ -55,8 +55,8 @@ export function MollyIllustration({ className }: { className?: string }) {
           <stop offset="100%" stopColor="var(--brand-2)" />
         </linearGradient>
         <radialGradient id="molly-eye-glow">
-          <stop offset="0%" stopColor="var(--cyan)" stopOpacity={0.8} />
-          <stop offset="100%" stopColor="var(--cyan)" stopOpacity={0} />
+          <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.8} />
+          <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
         </radialGradient>
       </defs>
 
@@ -146,7 +146,7 @@ export function MollyIllustration({ className }: { className?: string }) {
           fill="url(#molly-eye-glow)"
           className="animate-pulse-dot"
         />
-        <circle cx={266} cy={87} r={7} fill="var(--cyan)" />
+        <circle cx={266} cy={87} r={7} fill="var(--brand)" />
         <circle cx={268.5} cy={84.5} r={2.2} fill="#ffffff" />
 
         {/* near legs */}
