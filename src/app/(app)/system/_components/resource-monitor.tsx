@@ -25,7 +25,6 @@ export default function ResourceMonitor() {
             value={round1(health.cpuPercent ?? 0)}
             max={100}
             unit="%"
-            barClassName="bg-cyan"
           />
           {health.gpuPercent !== null && (
             <ResourceBar
@@ -33,7 +32,6 @@ export default function ResourceMonitor() {
               value={round1(health.gpuPercent)}
               max={100}
               unit="%"
-              barClassName="bg-violet"
             />
           )}
           <ResourceBar
@@ -41,7 +39,6 @@ export default function ResourceMonitor() {
             value={round1(health.memoryUsedGb ?? 0)}
             max={round1(health.memoryTotalGb ?? 0) || 1}
             unit=" GB"
-            barClassName="bg-amber"
           />
 
           <div className="grid grid-cols-2 gap-1.5 mt-2">
@@ -53,8 +50,8 @@ export default function ResourceMonitor() {
               <span
                 className={
                   (health.cpuTempC ?? 0) > 70
-                    ? "text-sm font-bold text-red"
-                    : "text-sm font-bold text-txt-primary"
+                    ? "text-sm font-semibold text-red"
+                    : "text-sm font-semibold text-txt-primary"
                 }
               >
                 {health.cpuTempC === null ? "—" : `${health.cpuTempC}°C`}
@@ -66,7 +63,7 @@ export default function ResourceMonitor() {
                 <HardDrive size={12} />
                 <span className="label">Disk free</span>
               </div>
-              <span className="text-sm font-bold text-txt-primary">
+              <span className="text-sm font-semibold text-txt-primary">
                 {health.diskFreeGb === null ? "—" : `${health.diskFreeGb} GB`}
               </span>
             </div>

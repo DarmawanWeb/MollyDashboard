@@ -23,7 +23,7 @@ export default function SystemLayout() {
 
         <section
           aria-label="Logs"
-          className="flex h-[70vh] min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-border-subtle bg-mol-secondary shadow-card @5xl:h-auto @5xl:min-h-0"
+          className="flex h-[70vh] min-h-[24rem] flex-col overflow-hidden rounded-xl border border-border-subtle bg-mol-secondary shadow-card @5xl:h-auto @5xl:min-h-0"
         >
           <LogViewer />
         </section>

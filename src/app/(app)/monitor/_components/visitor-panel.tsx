@@ -40,7 +40,7 @@ export function VisitorPanel() {
           icon={<Users size={13} />}
           label="Around"
           value={String(visitors.count)}
-          tone={visitors.count > 0 ? "text-cyan" : "text-txt-muted"}
+          tone={visitors.count > 0 ? "text-brand" : "text-txt-muted"}
         />
         <Stat
           icon={<Footprints size={13} />}
@@ -97,7 +97,7 @@ export function VisitorPanel() {
       <div className="flex flex-col gap-1">
         <span className="label">
           Gestures
-          {gesture ? <span className="text-cyan"> · {gesture}</span> : null}
+          {gesture ? <span className="text-brand"> · {gesture}</span> : null}
         </span>
         <div className="flex flex-wrap gap-1">
           {GESTURES.map((g) => (

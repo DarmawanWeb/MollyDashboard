@@ -45,11 +45,7 @@ export function InteractionSection() {
     });
 
   return (
-    <SettingsSection
-      icon={<MessageSquare size={18} />}
-      title="Interaction"
-      iconColor="text-violet"
-    >
+    <SettingsSection icon={<MessageSquare size={18} />} title="Interaction">
       <div className="flex flex-col gap-3">
         <MollyField
           label="Default language"
@@ -78,7 +74,7 @@ export function InteractionSection() {
               key={`${i}-${phrase.text}`}
               className="panel-inset px-2.5 py-1.5 flex items-center gap-2"
             >
-              <span className="font-mono text-[10px] font-bold text-cyan w-5 shrink-0">
+              <span className="font-mono text-[10px] font-bold text-brand w-5 shrink-0">
                 {phrase.language ? phrase.language.toUpperCase() : "—"}
               </span>
               <span

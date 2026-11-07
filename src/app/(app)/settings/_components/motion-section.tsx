@@ -55,11 +55,7 @@ export function MotionSection() {
   };
 
   return (
-    <SettingsSection
-      icon={<Footprints size={18} />}
-      title="Motion"
-      iconColor="text-amber"
-    >
+    <SettingsSection icon={<Footprints size={18} />} title="Motion">
       <div className="flex flex-col gap-3">
         <MollyField
           label="Walking speed"

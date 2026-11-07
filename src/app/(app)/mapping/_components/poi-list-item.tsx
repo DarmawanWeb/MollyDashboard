@@ -30,7 +30,7 @@ export function POIListItem({
     <div
       className={cn(
         "panel-inset px-2.5 py-2 flex items-start justify-between gap-2 transition-colors",
-        selected && "border-cyan/40",
+        selected && "border-brand/40",
       )}
     >
       <button
@@ -50,7 +50,7 @@ export function POIListItem({
             </div>
           )}
           {poi.narration && (
-            <div className="text-[10px] text-violet truncate">
+            <div className="text-[10px] text-txt-tertiary truncate">
               {poi.narration}
             </div>
           )}

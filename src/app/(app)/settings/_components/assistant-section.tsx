@@ -88,11 +88,7 @@ export function AssistantSection() {
         : "No LLM_API_URL on the server — the robot answers";
 
   return (
-    <SettingsSection
-      icon={<Sparkles size={18} />}
-      title="AI Assistant"
-      iconColor="text-violet"
-    >
+    <SettingsSection icon={<Sparkles size={18} />} title="AI assistant">
       <div className="flex flex-col gap-3">
         <MollyField
           label="Answers come from"

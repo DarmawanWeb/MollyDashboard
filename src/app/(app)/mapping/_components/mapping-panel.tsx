@@ -118,15 +118,15 @@ export function MappingPanel() {
           >
             {mapping.active
               ? `${mapping.site} · ${mapping.scans} scans · ${mapping.knownAreaM2.toFixed(0)} m²`
-              : mapping.message || "not mapping"}
+              : mapping.message || "Not mapping"}
           </span>
         </div>
 
         {mapping.active && (
           <p className="text-[10px] text-txt-muted leading-relaxed">
-            Drive the robot through the whole place in REMOTE (Control page or
-            the handheld). Stop in view of each AprilTag and record it, add POIs
-            on the way, then save the map.
+            Walk the robot through the whole place in remote mode with the
+            handheld. Stop in view of each AprilTag and record it, add POIs on
+            the way, then save the map.
           </p>
         )}
       </div>

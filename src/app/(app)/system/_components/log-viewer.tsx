@@ -24,7 +24,7 @@ const ROW_HEIGHT = 28;
 const OVERSCAN = 5;
 
 const COLOR: Record<LogLevel, string> = {
-  info: "text-cyan",
+  info: "text-brand",
   warn: "text-amber",
   error: "text-red",
   fatal: "text-red",
@@ -132,14 +132,9 @@ export default function LogViewer() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border-subtle px-4 py-3">
-        <span
-          aria-hidden="true"
-          className="grid size-8 place-items-center rounded-lg bg-brand/10 text-brand"
-        >
-          <Activity className="size-4" />
-        </span>
-        <h3 className="text-sm font-bold">Logs</h3>
-        <span className="rounded-full bg-mol-tertiary px-2 py-0.5 text-[11px] font-semibold tabular-nums text-txt-tertiary">
+        <Activity aria-hidden="true" className="size-4 text-txt-tertiary" />
+        <h3 className="text-sm font-semibold">Logs</h3>
+        <span className="rounded-md bg-mol-tertiary px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-txt-tertiary">
           {filtered.length}
         </span>
         <div className="flex-1" />
@@ -153,7 +148,7 @@ export default function LogViewer() {
             variant="ghost"
             size="xs"
             onClick={followNewest}
-            className="text-cyan border-cyan/30"
+            className="text-brand border-brand/30"
           >
             <ArrowDown size={11} aria-hidden="true" />
             Follow

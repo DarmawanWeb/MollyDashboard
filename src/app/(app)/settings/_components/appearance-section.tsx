@@ -7,11 +7,7 @@ import { SettingsSection } from "./settings-section";
 /** Light, dark, or following the operating system; saved per browser. */
 export function AppearanceSection() {
   return (
-    <SettingsSection
-      icon={<Palette size={18} />}
-      title="Appearance"
-      iconColor="text-amber"
-    >
+    <SettingsSection icon={<Palette size={18} />} title="Appearance">
       <div className="flex flex-col gap-2">
         <span className="label">Theme</span>
         <ThemeSwitcher />

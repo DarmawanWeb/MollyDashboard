@@ -12,14 +12,14 @@ import { LANGUAGE_OPTIONS } from "@/constants/gestures";
 import { useDraft } from "@/hooks/use-draft";
 import { useRobotAction } from "@/hooks/use-robot-action";
 import { useRobotApi } from "@/hooks/use-robot-api";
-import { cn } from "@/lib/utils";
+import { cn, sentenceCase } from "@/lib/utils";
 import { useInteractionStore } from "@/stores/use-interaction-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import type { Language, SpeechState } from "@/types";
 
 const STATE_TONE: Record<SpeechState, string> = {
   idle: "text-txt-tertiary",
-  speaking: "text-violet",
+  speaking: "text-brand",
   done: "text-txt-tertiary",
   failed: "text-red",
   cancelled: "text-txt-tertiary",
@@ -62,7 +62,7 @@ export function SpeechPanel() {
       <div className="panel-inset px-2.5 py-1.5 flex flex-col gap-1">
         <div className="flex items-center justify-between gap-2">
           <span className={cn("label", STATE_TONE[speech.state])}>
-            {speech.state}
+            {sentenceCase(speech.state)}
             {speech.engine ? ` · ${speech.engine}` : ""}
             {speech.queued > 0 ? ` · ${speech.queued} queued` : ""}
           </span>
@@ -85,7 +85,7 @@ export function SpeechPanel() {
             title={speech.text}
           >
             {speech.language && (
-              <span className="text-cyan">
+              <span className="text-brand">
                 {speech.language.toUpperCase()}{" "}
               </span>
             )}
@@ -167,7 +167,7 @@ export function SpeechPanel() {
                 title={phrase.text}
                 className="justify-start normal-case tracking-normal font-normal"
               >
-                <span className="text-cyan font-semibold shrink-0">
+                <span className="text-brand font-semibold shrink-0">
                   {phrase.language ? phrase.language.toUpperCase() : "—"}
                 </span>
                 <span className="truncate">{phrase.text}</span>

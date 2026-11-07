@@ -46,7 +46,7 @@ export function TourList({
             key={tour.id}
             className={cn(
               "panel-inset px-2.5 py-2 flex items-start justify-between gap-2 transition-colors",
-              selected && "border-cyan/40",
+              selected && "border-brand/40",
             )}
           >
             <button
@@ -63,7 +63,10 @@ export function TourList({
                   {tour.description}
                 </div>
               )}
-              <div className="text-[10px] text-violet truncate" title={stops}>
+              <div
+                className="text-[10px] text-txt-tertiary truncate"
+                title={stops}
+              >
                 {stops || "no stops"}
               </div>
               <div className="flex gap-2 mt-0.5">

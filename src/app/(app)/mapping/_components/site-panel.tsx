@@ -60,11 +60,20 @@ export function SitePanel() {
           </MollyButton>
         </div>
 
-        <div className="grid grid-cols-4 gap-1 font-mono text-[10px] text-center">
-          <Count label="map" value={status.hasMap ? "yes" : "no"} />
-          <Count label="tags" value={status.tagCount} />
-          <Count label="POIs" value={status.poiCount} />
-          <Count label="tours" value={status.tourCount} />
+        <div className="grid grid-cols-4 gap-1 text-center">
+          <Count label="Map" value={status.hasMap ? "Yes" : "No"} />
+          <Count
+            label={status.tagCount === 1 ? "Tag" : "Tags"}
+            value={status.tagCount}
+          />
+          <Count
+            label={status.poiCount === 1 ? "POI" : "POIs"}
+            value={status.poiCount}
+          />
+          <Count
+            label={status.tourCount === 1 ? "Tour" : "Tours"}
+            value={status.tourCount}
+          />
         </div>
 
         {status.message && (
@@ -80,8 +89,10 @@ export function SitePanel() {
 function Count({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="panel-inset py-1.5">
-      <div className="text-txt-primary text-xs">{value}</div>
-      <div className="text-txt-muted uppercase tracking-wider">{label}</div>
+      <div className="text-sm font-semibold tabular-nums text-txt-primary">
+        {value}
+      </div>
+      <div className="text-[11px] text-txt-tertiary">{label}</div>
     </div>
   );
 }

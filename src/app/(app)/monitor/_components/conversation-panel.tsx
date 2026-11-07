@@ -23,9 +23,9 @@ const TONES = {
     label: "text-txt-tertiary",
   },
   answer: {
-    border: "border-l-violet",
-    bg: "bg-violet/5",
-    label: "text-violet",
+    border: "border-l-brand",
+    bg: "bg-brand/5",
+    label: "text-brand",
   },
   failed: {
     border: "border-l-red",
@@ -57,7 +57,7 @@ function Bubble({
       <div className="mb-1 flex items-center justify-between">
         <span
           className={cn(
-            "flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest",
+            "flex items-center gap-1 text-[11px] font-medium",
             t.label,
           )}
         >
@@ -92,7 +92,7 @@ function Exchange({ entry }: { entry: ConversationEntry }) {
       </Bubble>
       {entry.pending && !entry.answer ? (
         <Bubble tone="answer" tag="Molly" meta="thinking…">
-          <Loader2 size={12} className="animate-spin text-violet" />
+          <Loader2 size={12} className="animate-spin text-brand" />
         </Bubble>
       ) : (
         <Bubble
@@ -155,9 +155,9 @@ export function ConversationPanel() {
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1.5 text-[11px] text-txt-tertiary">
         {engine === "llm" ? (
-          <Sparkles size={12} className="text-violet" />
+          <Sparkles size={12} className="text-brand" />
         ) : (
-          <Bot size={12} className="text-cyan" />
+          <Bot size={12} className="text-brand" />
         )}
         <span className="truncate">
           {!available

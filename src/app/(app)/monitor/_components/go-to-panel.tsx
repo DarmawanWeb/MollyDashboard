@@ -5,7 +5,7 @@ import { MollyButton } from "@/components/ui/molly";
 import { useRobotAction } from "@/hooks/use-robot-action";
 import { useRobotApi } from "@/hooks/use-robot-api";
 import { isWalking } from "@/lib/navigation/codec";
-import { cn } from "@/lib/utils";
+import { cn, sentenceCase } from "@/lib/utils";
 import { useNavigationStore } from "@/stores/use-navigation-store";
 import { useRobotStore } from "@/stores/use-robot-store";
 import { useSiteStore } from "@/stores/use-site-store";
@@ -14,8 +14,8 @@ import type { PlannerState } from "@/types";
 
 const STATE_TONE: Record<PlannerState, string> = {
   idle: "text-txt-tertiary",
-  planning: "text-cyan",
-  following: "text-cyan",
+  planning: "text-brand",
+  following: "text-brand",
   replanning: "text-amber",
   arrived: "text-green",
   failed: "text-red",
@@ -46,7 +46,7 @@ export function GoToPanel() {
       <div className="panel-inset px-2.5 py-1.5 flex flex-col gap-0.5">
         <div className="flex items-center justify-between gap-2">
           <span className={cn("label", STATE_TONE[planner.state])}>
-            {planner.state}
+            {sentenceCase(planner.state)}
             {planner.state !== "idle" ? ` · ${goalName}` : ""}
           </span>
           {walking && (
@@ -82,13 +82,13 @@ export function GoToPanel() {
               key={poi.id}
               className={cn(
                 "px-2.5 py-1 flex items-center justify-between gap-2 border-l-2",
-                isGoal ? "border-l-cyan bg-cyan/5" : "border-l-border-subtle",
+                isGoal ? "border-l-brand bg-brand/5" : "border-l-border-subtle",
               )}
             >
               <span
                 className={cn(
                   "text-xs truncate",
-                  isGoal ? "text-cyan" : "text-txt-secondary",
+                  isGoal ? "text-brand" : "text-txt-secondary",
                 )}
               >
                 {poi.name}

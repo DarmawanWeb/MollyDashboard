@@ -25,7 +25,7 @@ export function LocalizationPanel() {
         <div className="panel-inset px-3 py-2 flex items-center justify-between">
           <span
             className={`font-mono text-xs ${
-              localization.localized ? "text-cyan" : "text-amber"
+              localization.localized ? "text-brand" : "text-amber"
             }`}
           >
             {localization.localized

@@ -8,7 +8,7 @@ import { type Toast, useToastStore } from "@/stores/use-toast-store";
 const KIND_STYLES = {
   info: {
     icon: Info,
-    iconClass: "text-cyan",
+    iconClass: "text-brand",
   },
   success: {
     icon: CheckCircle2,
@@ -54,20 +54,13 @@ export function ToastItem({ toast }: Props) {
         toast.kind === "error" || toast.kind === "warn" ? "assertive" : "polite"
       }
       className={cn(
-        "relative flex w-80 gap-3 rounded-2xl border border-border-subtle bg-mol-secondary px-3.5 py-3 pr-9 shadow-card-lg",
+        "relative flex w-80 gap-2.5 rounded-xl border border-border-subtle bg-mol-secondary px-3.5 py-3 pr-9 shadow-card-lg",
         "motion-safe:animate-rise-in",
       )}
     >
-      <span
-        className={cn(
-          "grid size-8 shrink-0 place-items-center rounded-lg bg-mol-tertiary",
-          style.iconClass,
-        )}
-      >
-        <Icon size={16} />
-      </span>
-      <div className="min-w-0 flex-1 self-center">
-        <div className="truncate text-sm font-semibold text-txt-primary">
+      <Icon size={16} className={cn("mt-0.5 shrink-0", style.iconClass)} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium text-txt-primary">
           {toast.title}
         </div>
         {toast.description && (

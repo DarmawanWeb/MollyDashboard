@@ -30,7 +30,7 @@ export default function MonitorPage() {
     <div className="@container flex min-h-0 flex-1 flex-col overflow-y-auto @5xl:overflow-hidden">
       <div className="grid grid-cols-1 gap-3 p-3 lg:gap-4 lg:p-4 @2xl:grid-cols-2 @5xl:min-h-0 @5xl:flex-1 @5xl:grid-cols-[18rem_minmax(0,1fr)_22rem] @5xl:grid-rows-[minmax(0,1fr)]">
         <div className="order-first h-[60vh] min-h-[22rem] @2xl:col-span-2 @5xl:order-none @5xl:col-span-1 @5xl:col-start-2 @5xl:row-start-1 @5xl:h-auto @5xl:min-h-0">
-          <RobotMap className="rounded-2xl" />
+          <RobotMap className="rounded-xl" />
         </div>
 
         <AppSidebar className="@5xl:col-start-1 @5xl:row-start-1">

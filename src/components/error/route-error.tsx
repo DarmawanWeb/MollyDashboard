@@ -27,7 +27,7 @@ export function RouteError({ error, reset, route }: Props) {
     >
       <AlertOctagon size={32} className="text-red" />
       <div className="text-center">
-        <h2 className="text-base font-bold">{route} crashed</h2>
+        <h2 className="text-base font-semibold">{route} crashed</h2>
         <p className="text-xs text-txt-tertiary mt-1">
           This page hit an unrecoverable error. The rest of the dashboard should
           still work — try reloading this view.

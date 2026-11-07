@@ -167,7 +167,7 @@ export function TourControl() {
       <div className="panel-inset px-2.5 py-1.5 flex items-center justify-between gap-2">
         <span
           className={`label ${
-            isError ? "text-red" : isRunning ? "text-cyan" : ""
+            isError ? "text-red" : isRunning ? "text-brand" : ""
           }`}
         >
           {stateLabel(state)}
@@ -183,7 +183,7 @@ export function TourControl() {
       {isActive && (runningTourName || message) && (
         <div className="text-[10px] text-txt-tertiary font-mono truncate">
           {runningTourName && (
-            <span className="text-cyan">{runningTourName}</span>
+            <span className="text-brand">{runningTourName}</span>
           )}
           {runningTourName && message ? " · " : ""}
           {message}
@@ -215,7 +215,7 @@ export function TourControl() {
                 key={`${poi.id}-${i}`}
                 className={`px-2.5 py-1.5 flex items-center justify-between border-l-2 transition-colors ${
                   isCurrent
-                    ? "border-l-cyan bg-cyan/5"
+                    ? "border-l-brand bg-brand/5"
                     : "border-l-border-subtle"
                 }`}
               >
@@ -225,14 +225,14 @@ export function TourControl() {
                   </span>
                   <span
                     className={`text-xs truncate ${
-                      isCurrent ? "text-cyan" : "text-txt-secondary"
+                      isCurrent ? "text-brand" : "text-txt-secondary"
                     }`}
                   >
                     {poi.name}
                   </span>
                 </div>
 
-                {isCurrent && <ChevronRight size={12} className="text-cyan" />}
+                {isCurrent && <ChevronRight size={12} className="text-brand" />}
               </div>
             );
           })}

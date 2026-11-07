@@ -27,11 +27,7 @@ export function VideoSection() {
   const setVideo = useSettingsStore((s) => s.setVideo);
 
   return (
-    <SettingsSection
-      icon={<Video size={18} />}
-      title="Camera Stream"
-      iconColor="text-green"
-    >
+    <SettingsSection icon={<Video size={18} />} title="Camera stream">
       <div className="flex flex-col gap-3">
         <MollyField label="Width" htmlFor="video-width">
           <MollySelect

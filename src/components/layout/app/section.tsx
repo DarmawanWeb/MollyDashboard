@@ -24,20 +24,22 @@ export function AppSection({
   return (
     <section
       className={cn(
-        "flex min-h-0 flex-col rounded-2xl border border-border-subtle bg-mol-secondary p-4 shadow-card",
+        "flex min-h-0 flex-col rounded-xl border border-border-subtle bg-mol-secondary p-4 shadow-card",
         className,
       )}
     >
-      <header className="mb-3 flex shrink-0 items-center gap-2.5">
+      <header className="mb-3 flex min-h-7 shrink-0 items-center gap-2">
         {icon && (
           <span
             aria-hidden
-            className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand [&>svg]:size-4"
+            className="shrink-0 text-txt-tertiary [&>svg]:size-4"
           >
             {icon}
           </span>
         )}
-        <h3 className="min-w-0 flex-1 truncate text-sm font-bold">{title}</h3>
+        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {title}
+        </h3>
         {aside}
       </header>
 

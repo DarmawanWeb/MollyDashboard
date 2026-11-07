@@ -24,7 +24,7 @@ export default function MappingPage() {
       <div className="grid grid-cols-1 gap-3 p-3 lg:gap-4 lg:p-4 @5xl:min-h-0 @5xl:flex-1 @5xl:grid-cols-[minmax(0,1fr)_23rem] @5xl:grid-rows-[minmax(0,1fr)]">
         <div className="relative h-[60vh] min-h-[22rem] @5xl:h-auto @5xl:min-h-0">
           <RobotMap
-            className="rounded-2xl"
+            className="rounded-xl"
             showPoiLabels
             showVisitors={false}
             selectedPoiId={editor.selectedId}
@@ -38,15 +38,15 @@ export default function MappingPage() {
           />
 
           {editor.placing && (
-            <div className="absolute top-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-gradient-brand py-2 pr-2 pl-4 text-sm font-semibold text-on-brand shadow-card-lg">
-              <MousePointerClick className="size-4" />
+            <div className="absolute top-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-txt-primary py-1.5 pr-1.5 pl-3 text-xs font-medium text-mol-root shadow-card-lg">
+              <MousePointerClick className="size-3.5" />
               Click to place · drag to set the heading
               <button
                 title="Cancel"
                 aria-label="Cancel placing"
                 type="button"
                 onClick={editor.cancelPlacement}
-                className="grid size-7 place-items-center rounded-full bg-white/15 hover:bg-white/25"
+                className="grid size-6 place-items-center rounded-md text-mol-root/70 hover:bg-mol-root/15 hover:text-mol-root"
               >
                 <X className="size-3.5" />
               </button>

@@ -81,7 +81,7 @@ export function RobotStatus() {
           icon={<LocateFixed size={13} />}
           label="Localization"
           value={localizationText(localization)}
-          tone={localization.localized ? "text-cyan" : "text-amber"}
+          tone={localization.localized ? "text-brand" : "text-amber"}
         />
         <Stat
           icon={<SlidersHorizontal size={13} />}
