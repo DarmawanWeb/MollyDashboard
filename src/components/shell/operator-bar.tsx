@@ -9,26 +9,10 @@ import { cn } from "@/lib/utils";
 import { useRobotStore } from "@/stores/use-robot-store";
 
 const CONNECTION = {
-  connected: {
-    label: "Connected",
-    dot: "bg-green",
-    tone: "border-green/30 bg-green/10 text-green",
-  },
-  reconnecting: {
-    label: "Reconnecting",
-    dot: "bg-amber animate-pulse-dot",
-    tone: "border-amber/30 bg-amber/10 text-amber",
-  },
-  disconnected: {
-    label: "Disconnected",
-    dot: "bg-red",
-    tone: "border-red/30 bg-red/10 text-red",
-  },
-  demo: {
-    label: "Demo robot",
-    dot: "bg-amber",
-    tone: "border-amber/30 bg-amber/10 text-amber",
-  },
+  connected: { label: "Connected", dot: "bg-green" },
+  reconnecting: { label: "Reconnecting", dot: "bg-amber animate-pulse-dot" },
+  disconnected: { label: "Disconnected", dot: "bg-red" },
+  demo: { label: "Demo robot", dot: "bg-amber" },
 } as const;
 
 /** rosbridge state, or "Demo robot" on a USE_MOCKS build. */
@@ -38,12 +22,11 @@ export function ConnectionPill({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
-        style.tone,
+        "inline-flex h-8 shrink-0 items-center gap-2 rounded-lg border border-border-subtle bg-mol-secondary px-2.5 text-xs font-medium text-txt-secondary",
         className,
       )}
     >
-      <span className={cn("size-2 rounded-full", style.dot)} />
+      <span className={cn("size-1.5 rounded-full", style.dot)} />
       {style.label}
     </span>
   );
@@ -52,15 +35,11 @@ export function ConnectionPill({ className }: { className?: string }) {
 /** Top bar of the operator pages: page title, robot state, e-stop, theme. */
 export function OperatorBar({ pathname }: { pathname: string }) {
   const item = navItemFor(pathname);
-  const Icon = item.icon;
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3">
-      <span className="hidden size-10 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand @md:grid">
-        <Icon className="size-5" />
-      </span>
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight">
+        <h1 className="truncate text-[0.95rem] font-semibold leading-tight tracking-tight">
           {item.label}
         </h1>
         <p className="hidden truncate text-xs text-txt-tertiary @2xl:block">
@@ -68,7 +47,7 @@ export function OperatorBar({ pathname }: { pathname: string }) {
         </p>
       </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-2 @xl:gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-2">
         <ActivityBadge className="hidden @4xl:flex" />
         <ConnectionPill className="hidden @3xl:inline-flex" />
         <EstopButton />

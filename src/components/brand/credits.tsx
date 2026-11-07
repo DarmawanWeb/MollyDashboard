@@ -24,11 +24,11 @@ export function Credits({
         className="size-[1em] shrink-0 fill-red text-red"
       />
       {language === "id" ? "oleh" : "by"}
-      <span className="font-semibold text-txt-secondary">{author}</span>
+      <span className="font-medium text-txt-secondary">{author}</span>
       <span aria-hidden className="text-txt-muted">
         ·
       </span>
-      <span className="font-semibold text-txt-secondary">{company}</span>
+      <span className="font-medium text-txt-secondary">{company}</span>
     </span>
   );
 }

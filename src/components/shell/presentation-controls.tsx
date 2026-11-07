@@ -24,11 +24,11 @@ export function PresentButton({ copy }: { copy: DisplayCopy }) {
       title={copy.present.title}
       aria-label={copy.present.start}
       className={cn(
-        "inline-flex h-9 shrink-0 items-center gap-2 rounded-xl bg-gradient-brand px-2.5 text-sm font-semibold text-on-brand shadow-card transition-[opacity,transform] hover:opacity-90 active:scale-95 @3xl:px-3.5",
+        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-brand px-2.5 text-xs font-medium text-on-brand transition-[background-color,transform] hover:bg-brand-light active:scale-[0.98] @3xl:px-3",
         "presenting:hidden",
       )}
     >
-      <Presentation className="size-4" />
+      <Presentation className="size-3.5" />
       <span className="hidden @3xl:inline">{copy.present.start}</span>
     </button>
   );
@@ -48,7 +48,7 @@ export function ExitPresentationButton({ copy }: { copy: DisplayCopy }) {
       title={copy.present.exit}
       aria-label={copy.present.exit}
       className={cn(
-        "relative hidden size-9 shrink-0 touch-none select-none place-items-center rounded-full border border-border-subtle bg-mol-secondary/70 text-txt-muted transition-colors hover:text-txt-primary",
+        "relative hidden size-8 shrink-0 touch-none select-none place-items-center rounded-full text-txt-muted transition-colors hover:bg-mol-tertiary hover:text-txt-primary",
         "presenting:grid",
       )}
     >
@@ -92,7 +92,7 @@ export function PresentationHint({ copy }: { copy: DisplayCopy }) {
   if (!shown) return null;
 
   return (
-    <output className="pointer-events-none fixed bottom-14 left-1/2 z-50 animate-slide-up rounded-full border border-border-subtle bg-mol-secondary/90 px-4 py-2 text-sm font-semibold text-txt-secondary shadow-card-lg backdrop-blur">
+    <output className="pointer-events-none fixed bottom-14 left-1/2 z-50 animate-slide-up rounded-lg bg-txt-primary px-3.5 py-2 text-xs font-medium text-mol-root shadow-card-lg">
       {copy.present.hint}
     </output>
   );

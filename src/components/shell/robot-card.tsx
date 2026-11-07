@@ -11,7 +11,7 @@ import { NavTooltip } from "./nav-tooltip";
 
 const STATUS: Record<DisplayMode, { label: string; dot: string }> = {
   live: { label: "Online", dot: "bg-green" },
-  demo: { label: "Demo robot", dot: "bg-amber" },
+  demo: { label: "Demo", dot: "bg-amber" },
   offline: { label: "Offline", dot: "bg-txt-muted" },
 };
 
@@ -39,48 +39,39 @@ export function RobotCard() {
     >
       <div
         className={cn(
-          "rounded-2xl border border-border-subtle bg-mol-tertiary/70 p-3",
-          "lg:sb-collapsed:border-transparent lg:sb-collapsed:bg-transparent lg:sb-collapsed:p-0",
+          "rounded-xl border border-border-subtle bg-mol-secondary p-3 shadow-card",
+          "lg:sb-collapsed:border-transparent lg:sb-collapsed:bg-transparent lg:sb-collapsed:p-0 lg:sb-collapsed:shadow-none",
         )}
       >
-        <div className="flex items-center gap-3 lg:sb-collapsed:justify-center">
-          <span className="relative grid size-10 shrink-0 place-items-center rounded-xl bg-mol-secondary ring-1 ring-border-subtle">
-            <Bot className="size-5 text-brand" />
+        <div className="flex items-center gap-2.5 lg:sb-collapsed:justify-center">
+          <span className="relative grid size-8 shrink-0 place-items-center rounded-lg bg-mol-tertiary">
+            <Bot className="size-4 text-txt-secondary" />
             <span
               className={cn(
-                "absolute -right-0.5 -bottom-0.5 size-3 rounded-full ring-2 ring-mol-primary",
+                "absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2 ring-mol-secondary lg:sb-collapsed:ring-mol-primary",
                 status.dot,
-                mode === "live" && "animate-pulse-dot",
               )}
             />
           </span>
-          <div className="min-w-0 lg:sb-collapsed:hidden">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-bold">Molly</span>
-              <span className="text-[0.65rem] font-semibold text-txt-muted">
-                Lite3
-              </span>
+          <div className="min-w-0 flex-1 lg:sb-collapsed:hidden">
+            <div className="text-[0.8rem] font-medium">Molly</div>
+            <div className="truncate text-[0.7rem] text-txt-tertiary">
+              {line}
             </div>
-            <div className="truncate text-xs text-txt-tertiary">{line}</div>
           </div>
+          <span className="text-[0.75rem] font-medium tabular-nums text-txt-secondary lg:sb-collapsed:hidden">
+            {pct === null ? "—" : `${pct}%`}
+          </span>
         </div>
 
-        <div className="mt-3 lg:sb-collapsed:hidden">
-          <div className="mb-1 flex justify-between text-[0.7rem] font-semibold text-txt-tertiary">
-            <span>Battery</span>
-            <span className="tabular-nums text-txt-secondary">
-              {pct === null ? "—" : `${pct}%`}
-            </span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-mol-elevated">
-            <div
-              className={cn(
-                "h-full rounded-full transition-[width] duration-700",
-                pct !== null && pct <= 25 ? "bg-orange" : "bg-gradient-brand",
-              )}
-              style={{ width: `${pct ?? 0}%` }}
-            />
-          </div>
+        <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-mol-tertiary lg:sb-collapsed:hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-[width] duration-700",
+              pct !== null && pct <= 25 ? "bg-orange" : "bg-brand",
+            )}
+            style={{ width: `${pct ?? 0}%` }}
+          />
         </div>
       </div>
     </NavTooltip>

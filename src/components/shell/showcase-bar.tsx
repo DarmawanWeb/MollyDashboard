@@ -13,6 +13,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { DISPLAY_COPY } from "@/lib/display/copy";
 import { useDisplayStore } from "@/stores/use-display-store";
 import type { BrandLogos } from "@/types";
+import { MollyMark } from "./molly-mark";
 import { ExitPresentationButton, PresentButton } from "./presentation-controls";
 
 /**
@@ -30,27 +31,34 @@ export function ShowcaseBar({ logos }: { logos: BrandLogos }) {
     <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 @3xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
       <div className="flex min-w-0 items-center">
         <PartnerLockup logos={logos} size="md" className="hidden @3xl:flex" />
-        <span className="text-gradient-brand text-xl font-extrabold tracking-tight @3xl:hidden">
-          {BRAND.robot}
+        <span className="flex items-center gap-2 @3xl:hidden">
+          <MollyMark className="size-7" />
+          <span className="text-base font-semibold tracking-tight">
+            {BRAND.robot}
+          </span>
         </span>
       </div>
 
-      <div className="hidden flex-col items-center leading-none @3xl:flex">
-        <span className="text-gradient-brand text-[1.7rem] font-extrabold tracking-tight">
-          {BRAND.robot}
-        </span>
-        <span className="mt-0.5 text-[0.6rem] font-bold uppercase tracking-[0.24em] text-txt-tertiary">
-          {copy.tagline}
-        </span>
+      {/* the sidebar carries the name on desktop (globals.css) */}
+      <div className="showcase-brand hidden items-center gap-2.5 @3xl:flex">
+        <MollyMark className="size-8" />
+        <div className="leading-tight">
+          <div className="text-[1.05rem] font-semibold tracking-tight">
+            {BRAND.robot}
+          </div>
+          <div className="text-[0.7rem] text-txt-tertiary">{copy.tagline}</div>
+        </div>
       </div>
 
-      <div className="flex min-w-0 items-center justify-end gap-2 @2xl:gap-3">
-        <span className="hidden @xl:inline-flex">
-          <StatusPill mode={mode} copy={copy} />
-        </span>
+      <div className="flex min-w-0 items-center justify-end gap-2 @3xl:col-start-3">
+        <StatusPill
+          mode={mode}
+          copy={copy}
+          className="hidden @xl:inline-flex"
+        />
         <LiveClock
           language={language}
-          className="hidden whitespace-nowrap @[78rem]:flex"
+          className="hidden whitespace-nowrap px-2 @[78rem]:flex"
         />
         <LanguageToggle
           language={language}

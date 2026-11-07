@@ -30,7 +30,7 @@ export function CompanyLogo({
     return (
       <span
         className={cn(
-          "inline-flex items-center whitespace-nowrap font-bold leading-none tracking-tight text-txt-primary",
+          "inline-flex items-center whitespace-nowrap font-semibold leading-none tracking-tight text-txt-primary",
           className,
         )}
         title={company.name}
